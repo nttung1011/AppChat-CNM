@@ -9,7 +9,7 @@ export default function Home() {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [chatList] = useState([
-    { id: 1, name: "Trần Bảo Xuyên", lastMessage: "Okay", active: true },
+    { id: 1, name: "Nguyễn Thanh Tùng", lastMessage: "Okay", active: true },
     { id: 2, name: "Nhóm abc", lastMessage: "Bạn A: 123", isGroup: true },
   ]);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -119,42 +119,44 @@ export default function Home() {
     e.preventDefault();
     setPasswordError("");
     setPasswordSuccess("");
-
+  
     const { oldPassword, newPassword, confirmPassword } = passwordData;
-
+  
+    // Kiểm tra đầu vào
     if (!oldPassword || !newPassword || !confirmPassword) {
       setPasswordError("Vui lòng điền đầy đủ các trường!");
       return;
     }
-
+  
     if (newPassword !== confirmPassword) {
       setPasswordError("Mật khẩu mới và xác nhận mật khẩu không khớp!");
       return;
     }
-
+  
     if (newPassword.length < 6) {
       setPasswordError("Mật khẩu mới phải có ít nhất 6 ký tự!");
       return;
     }
-
+  
     try {
       const token = localStorage.getItem("token");
       if (!user || !user.phoneNumber) {
         setPasswordError("Không thể xác định thông tin người dùng!");
         return;
       }
-
-      await axios.put(
+  
+      // Gửi cả oldPassword và newPassword đến API
+      const response = await axios.put(
         `http://localhost:3000/api/user/changePassword/${user.phoneNumber}`,
-        { newPassword },
+        { oldPassword, newPassword },
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-
-      setPasswordSuccess("Đổi mật khẩu thành công!");
+  
+      setPasswordSuccess(response.data.message);
       setPasswordData({ oldPassword: "", newPassword: "", confirmPassword: "" });
       setTimeout(() => {
         setShowChangePasswordModal(false);
@@ -164,7 +166,7 @@ export default function Home() {
       console.error("Lỗi khi đổi mật khẩu:", err);
       setPasswordError(err.response?.data?.message || "Đổi mật khẩu thất bại. Vui lòng thử lại!");
     }
-  };
+  }
 
   const closeModal = () => {
     setShowChangePasswordModal(false);
@@ -178,7 +180,7 @@ export default function Home() {
     if (user && user.avatar && user.avatar !== "NONE") {
       return user.avatar;
     }
-    return "https://via.placeholder.com/40"; // Ảnh mặc định
+    return ""; // Ảnh mặc định
   };
 
   return (
@@ -265,10 +267,10 @@ export default function Home() {
               <div className="chat-avatar">
                 {chat.isGroup ? (
                   <div className="group-avatar">
-                    <img src="https://via.placeholder.com/40" alt="Group" />
+                    <img src="" alt="Group" />
                   </div>
                 ) : (
-                  <img src="https://via.placeholder.com/40" alt={chat.name} />
+                  <img src="" alt={chat.name} />
                 )}
               </div>
               <div className="chat-info">
@@ -294,7 +296,7 @@ export default function Home() {
             </div>
             <form className="modal-form" onSubmit={handleChangePassword}>
               <div className="form-group">
-                <label htmlFor="oldPassword">Mật khẩu cũ</label>
+                <label htmlFor="oldPassword">Nhập mật khẩu</label>
                 <input
                   type="password"
                   id="oldPassword"
