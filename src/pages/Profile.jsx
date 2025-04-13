@@ -1,4 +1,3 @@
-// src/pages/Profile.js
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -16,6 +15,29 @@ export default function Profile() {
   const [avatarSuccess, setAvatarSuccess] = useState("");
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
+
+  // Hàm định dạng ngày tháng thành dạng ngày/tháng/năm
+  const formatDate = (dateString) => {
+    if (!dateString) return "Chưa cập nhật";
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "Chưa cập nhật";
+      const day = String(date.getDate()).padStart(2, "0");
+      const month = String(date.getMonth() + 1).padStart(2, "0"); // Tháng bắt đầu từ 0
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    } catch {
+      return "Chưa cập nhật";
+    }
+  };
+
+  // Hàm chuyển định dạng ngày/tháng/năm sang yyyy-MM-dd để gửi lên server
+  const parseDateForServer = (dateString) => {
+    if (!dateString) return "";
+    const [day, month, year] = dateString.split("/");
+    if (!day || !month || !year) return dateString; // Trả về nguyên bản nếu không đúng định dạng
+    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  };
 
   const refreshAccessToken = useCallback(async () => {
     try {
@@ -59,7 +81,7 @@ export default function Profile() {
           username: res.data.username || "",
           phoneNumber: res.data.phoneNumber || "",
           gmail: res.data.gmail || "",
-          DOB: res.data.DOB || "",
+          DOB: res.data.DOB || "", // Lưu nguyên dạng yyyy-MM-dd
         });
         setLoading(false);
       } catch (err) {
@@ -101,7 +123,7 @@ export default function Profile() {
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
-    setFormData((prev) => ({ ...prev, [id]: value }));
+    setFormData((prev) => ({ ...prev, [id]: id === "DOB" ? value : value }));
   };
 
   const handleSave = async () => {
@@ -109,17 +131,23 @@ export default function Profile() {
       const token = localStorage.getItem("token");
       const decodedToken = jwtDecode(token);
       const userID = decodedToken.userID;
-
+  
+      // Sử dụng parseDateForServer để định dạng DOB
+      const dataToSend = {
+        ...formData,
+        DOB: parseDateForServer(formData.DOB) || "",
+      };
+  
       const res = await axios.put(
         `http://localhost:3000/api/user/${userID}`,
-        formData,
+        dataToSend,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-
+  
       setUser(res.data.user);
       setIsEditing(false);
     } catch (err) {
@@ -146,14 +174,12 @@ export default function Profile() {
     const file = e.target.files[0];
     if (!file) return;
   
-    // Kiểm tra định dạng file
     const validImageTypes = ["image/jpeg", "image/png", "image/gif"];
     if (!validImageTypes.includes(file.type)) {
       setAvatarError("Chỉ chấp nhận file ảnh (JPEG, PNG, GIF)");
       return;
     }
   
-    // Kiểm tra kích thước file (50MB để khớp với backend)
     if (file.size > 50 * 1024 * 1024) {
       setAvatarError("Kích thước ảnh không được vượt quá 50MB");
       return;
@@ -200,7 +226,6 @@ export default function Profile() {
           if (newToken) {
             localStorage.setItem("token", newToken);
             attempt++;
-            // Chờ 1s trước khi retry để tránh quá tải
             await new Promise((resolve) => setTimeout(resolve, 1000));
             continue;
           } else {
@@ -212,7 +237,6 @@ export default function Profile() {
           let errorMessage = "Không thể cập nhật ảnh đại diện. Vui lòng thử lại sau.";
           if (err.response?.status === 500) {
             const backendError = err.response?.data || err.message;
-            console.log("Toàn bộ lỗi từ backend:", JSON.stringify(backendError, null, 2));
             if (
               typeof backendError.message === "string" &&
               (backendError.message.toLowerCase().includes("dynamodb") ||
@@ -237,13 +261,11 @@ export default function Profile() {
           setAvatarError(errorMessage);
           break;
         }
+      // eslint-disable-next-line no-unreachable
       } finally {
-        if (attempt >= maxRetries) {
-          setUploadingAvatar(false);
-        }
+        setUploadingAvatar(false); // Chuyển vào đây và xóa điều kiện
       }
     }
-    setUploadingAvatar(false);
   };
 
   if (loading) {
@@ -324,13 +346,21 @@ export default function Profile() {
           </div>
           <div className="form-group">
             <label htmlFor="DOB">Ngày sinh</label>
-            <input
-              type="text"
-              id="DOB"
-              value={formData.DOB || "Chưa cập nhật"}
-              onChange={handleInputChange}
-              readOnly={!isEditing}
-            />
+            {isEditing ? (
+              <input
+                type="date"
+                id="DOB"
+                value={formData.DOB || ""}
+                onChange={handleInputChange}
+              />
+            ) : (
+              <input
+                type="text"
+                id="DOB"
+                value={formatDate(formData.DOB)}
+                readOnly
+              />
+            )}
           </div>
         </div>
       </div>
