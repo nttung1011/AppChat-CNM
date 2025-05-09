@@ -1,129 +1,209 @@
-/* Import font Google (Roboto) để giao diện trông hiện đại hơn */
+/* Import font Google (Inter thay cho Roboto để trông tinh tế hơn) */
 
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 .login-container {
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #eff6ff;
-    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%);
+    /* Gradient nhẹ */
+    font-family: 'Inter', sans-serif;
+    padding: 1rem;
+    /* Thêm padding cho mobile */
 }
 
 .login-box {
-    width: 450px;
-    background: white;
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 450px;
+    /* Giới hạn chiều rộng tối đa */
+    background: rgba(255, 255, 255, 0.95);
+    /* Nửa trong suốt nhẹ */
+    border-radius: 24px;
+    /* Bo góc lớn hơn */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    /* Bóng mờ mềm mại */
     overflow: hidden;
+    backdrop-filter: blur(10px);
+    /* Hiệu ứng kính mờ */
 }
 
 .login-header {
-    background: #0088ff;
-    padding: 2rem 1rem;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    /* Gradient header */
+    padding: 2.5rem 1rem;
     text-align: center;
     color: white;
+    position: relative;
+    overflow: hidden;
 }
 
 .login-logo {
-    width: 60px;
+    width: 80px;
+    /* Tăng kích thước logo */
     margin-bottom: 1rem;
+    animation: fadeIn 1s ease-in-out;
+    /* Hiệu ứng fade-in */
 }
 
 .login-header h1 {
-    font-size: 2rem;
+    font-size: 2.25rem;
     font-weight: 700;
     margin-bottom: 0.5rem;
+    letter-spacing: -0.025em;
+    /* Giãn chữ nhẹ */
 }
 
 .login-header p {
     font-size: 1rem;
-    opacity: 0.9;
+    opacity: 0.85;
+    max-width: 80%;
+    margin: 0 auto;
 }
 
 .login-form {
-    padding: 2rem;
+    padding: 2.5rem 2rem;
     display: flex;
-    /* Sử dụng flexbox để căn giữa */
     flex-direction: column;
     align-items: center;
-    /* Căn giữa các phần tử con */
+    gap: 1rem;
+    /* Thêm khoảng cách giữa các phần tử */
 }
 
 .form-group {
     margin-bottom: 1.5rem;
     width: 100%;
-    /* Đảm bảo form-group chiếm toàn bộ chiều rộng */
     max-width: 350px;
-    /* Giới hạn chiều rộng để không bị quá rộng */
 }
 
 .form-group label {
     display: block;
     margin-bottom: 0.5rem;
-    color: #374151;
+    color: #1f2a44;
+    /* Màu tối hơn cho contrast */
     font-weight: 500;
     font-size: 0.95rem;
     text-align: left;
-    /* Căn trái label để thẳng hàng với input */
 }
 
 .form-group input {
     width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
+    padding: 0.85rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    /* Bo góc lớn hơn */
     font-size: 1rem;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    background: #f9fafb;
+    /* Nền input nhẹ */
+    transition: all 0.3s ease;
     box-sizing: border-box;
-    /* Đảm bảo padding không làm tăng kích thước */
 }
 
 .form-group input:focus {
     outline: none;
-    border-color: #0088ff;
-    box-shadow: 0 0 0 3px rgba(0, 136, 255, 0.1);
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+    background: white;
 }
 
 .login-button {
     width: 100%;
     max-width: 350px;
-    /* Cùng chiều rộng với form-group */
-    background: #0088ff;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    /* Gradient button */
     color: white;
-    padding: 0.75rem;
+    padding: 0.85rem;
     border: none;
-    border-radius: 8px;
+    border-radius: 12px;
     font-size: 1rem;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
-    transition: background 0.3s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .login-button:hover {
-    background: #0066cc;
+    transform: translateY(-2px);
+    /* Nhấc nhẹ khi hover */
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.login-button:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
 }
 
 .login-link {
     margin-top: 1.5rem;
     text-align: center;
     font-size: 0.9rem;
-    color: #374151;
+    color: #4b5563;
 }
 
 .login-link a {
-    color: #0088ff;
+    color: #3b82f6;
     text-decoration: none;
     font-weight: 500;
+    transition: color 0.2s ease;
 }
 
 .login-link a:hover {
-    text-decoration: underline;
+    color: #8b5cf6;
+    text-decoration: none;
 }
 
 .error-message {
-    color: #e53e3e;
+    color: #dc2626;
     font-size: 0.9rem;
     margin-bottom: 1rem;
     text-align: center;
+    animation: shake 0.3s ease;
+    /* Hiệu ứng rung khi có lỗi */
+}
+
+
+/* Animation keyframes */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes shake {
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-5px);
+    }
+    75% {
+        transform: translateX(5px);
+    }
+}
+
+
+/* Responsive design */
+
+@media (max-width: 480px) {
+    .login-box {
+        border-radius: 16px;
+        margin: 0 1rem;
+    }
+    .login-header h1 {
+        font-size: 1.75rem;
+    }
+    .login-form {
+        padding: 1.5rem;
+    }
+    .form-group input,
+    .login-button {
+        padding: 0.75rem;
+    }
 }

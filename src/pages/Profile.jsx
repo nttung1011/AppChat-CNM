@@ -121,9 +121,13 @@ export default function Profile() {
     fetchUser();
   }, [navigate, refreshAccessToken]);
 
+  // Chỉ cho phép chỉnh sửa username và DOB
   const handleInputChange = (e) => {
     const { id, value } = e.target;
-    setFormData((prev) => ({ ...prev, [id]: id === "DOB" ? value : value }));
+    // Chỉ cập nhật state nếu trường là username hoặc DOB
+    if (id === "username" || id === "DOB") {
+      setFormData((prev) => ({ ...prev, [id]: value }));
+    }
   };
 
   const handleSave = async () => {
@@ -131,13 +135,13 @@ export default function Profile() {
       const token = localStorage.getItem("token");
       const decodedToken = jwtDecode(token);
       const userID = decodedToken.userID;
-  
-      // Sử dụng parseDateForServer để định dạng DOB
+
+      // Chỉ gửi username và DOB lên server
       const dataToSend = {
-        ...formData,
+        username: formData.username,
         DOB: parseDateForServer(formData.DOB) || "",
       };
-  
+
       const res = await axios.put(
         `http://localhost:3000/api/user/${userID}`,
         dataToSend,
@@ -147,7 +151,7 @@ export default function Profile() {
           },
         }
       );
-  
+
       setUser(res.data.user);
       setIsEditing(false);
     } catch (err) {
@@ -173,34 +177,34 @@ export default function Profile() {
   const handleAvatarChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-  
-    const validImageTypes = ["image/jpeg", "image/png", "image/gif"];
+
+    const validImageTypes = ["image/jpeg", "image/png", "image/gif", "image/jfif"];
     if (!validImageTypes.includes(file.type)) {
-      setAvatarError("Chỉ chấp nhận file ảnh (JPEG, PNG, GIF)");
+      setAvatarError("Chỉ chấp nhận file ảnh (JPEG, PNG, GIF, JFIF)");
       return;
     }
-  
+
     if (file.size > 50 * 1024 * 1024) {
       setAvatarError("Kích thước ảnh không được vượt quá 50MB");
       return;
     }
-  
+
     setAvatarError("");
     setAvatarSuccess("");
     setUploadingAvatar(true);
-  
+
     const maxRetries = 2;
     let attempt = 0;
-  
+
     while (attempt <= maxRetries) {
       try {
         let token = localStorage.getItem("token");
         const decodedToken = jwtDecode(token);
         const userID = decodedToken.userID;
-  
+
         const formData = new FormData();
         formData.append("avatar", file);
-  
+
         const res = await axios.put(
           `http://localhost:3000/api/user/${userID}/avatar`,
           formData,
@@ -211,12 +215,12 @@ export default function Profile() {
             },
           }
         );
-  
+
         setUser((prev) => ({
           ...prev,
           avatar: res.data.user.avatar,
         }));
-  
+
         setAvatarSuccess("Cập nhật ảnh đại diện thành công!");
         setTimeout(() => setAvatarSuccess(""), 3000);
         break;
@@ -261,9 +265,8 @@ export default function Profile() {
           setAvatarError(errorMessage);
           break;
         }
-      // eslint-disable-next-line no-unreachable
       } finally {
-        setUploadingAvatar(false); // Chuyển vào đây và xóa điều kiện
+        setUploadingAvatar(false);
       }
     }
   };
@@ -321,7 +324,7 @@ export default function Profile() {
               id="username"
               value={formData.username || ""}
               onChange={handleInputChange}
-              readOnly={!isEditing}
+              readOnly={!isEditing} // Chỉ cho phép chỉnh sửa khi isEditing = true
             />
           </div>
           <div className="form-group">
@@ -330,8 +333,7 @@ export default function Profile() {
               type="text"
               id="phoneNumber"
               value={formData.phoneNumber || ""}
-              onChange={handleInputChange}
-              readOnly={!isEditing}
+              readOnly // Luôn chỉ đọc, không cho phép chỉnh sửa
             />
           </div>
           <div className="form-group">
@@ -340,8 +342,7 @@ export default function Profile() {
               type="email"
               id="gmail"
               value={formData.gmail || ""}
-              onChange={handleInputChange}
-              readOnly={!isEditing}
+              readOnly // Luôn chỉ đọc, không cho phép chỉnh sửa
             />
           </div>
           <div className="form-group">

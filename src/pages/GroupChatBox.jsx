@@ -145,7 +145,7 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
       socket.off("memberLeft");
       socket.off("leaderSwitched");
     };
-  }, [groupID, onBack, user.userID, fetchGroups,onBack]);
+  }, [groupID, onBack, user.userID, fetchGroups]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -265,30 +265,46 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
     }
   };
 
- const handleDeleteGroup = async () => {
-  const isLeader = members.find((m) => m.userID === user.userID)?.memberRole === "LEADER";
-  if (!isLeader) {
-    alert("Chỉ Leader mới có quyền xóa nhóm!");
-    return;
-  }
+  const handleDeleteGroup = async () => {
+    const isLeader = members.find((m) => m.userID === user.userID)?.memberRole === "LEADER";
+    if (!isLeader) {
+      alert("Chỉ Leader mới có quyền xóa nhóm!");
+      return;
+    }
 
-  const confirmDelete = window.confirm("Bạn có chắc chắn muốn xóa nhóm này không?");
-  if (!confirmDelete) return;
+    const confirmDelete = window.confirm("Bạn có chắc chắn muốn xóa nhóm này không? Hành động này không thể hoàn tác.");
+    if (!confirmDelete) return;
 
-  try {
-    const token = localStorage.getItem("token");
-    const response = await axios.delete(`http://localhost:3000/api/group/${groupID}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    console.log("Xóa nhóm thành công:", response.data);
-    socket.emit("deleteGroup", groupID); // Phát sự kiện xóa nhóm
-    await fetchGroups(token, user.userID);
-    onBack();
-  } catch (err) {
-    console.error("Lỗi khi xóa nhóm:", err.response?.data || err.message);
-    alert("Không thể xóa nhóm. Vui lòng thử lại!");
-  }
-};
+    try {
+      const token = localStorage.getItem("token");
+      console.log("Gửi yêu cầu xóa nhóm với groupID:", groupID);
+      const response = await axios.delete(`http://localhost:3000/api/group/${groupID}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.status === 200) {
+        socket.emit("deleteGroup", groupID);
+        alert("Xóa nhóm thành công!");
+        await fetchGroups(token, user.userID);
+        onBack();
+      } else {
+        throw new Error("Phản hồi từ server không như mong đợi!");
+      }
+    } catch (err) {
+      console.error("Lỗi khi xóa nhóm:", err.response?.data || err.message);
+      let errorMessage = "Không thể xóa nhóm, vui lòng thử lại!";
+      if (err.response?.status === 404) {
+        errorMessage = "Nhóm không tồn tại hoặc đã bị xóa!";
+      } else if (err.response?.status === 403) {
+        errorMessage = "Bạn không có quyền xóa nhóm này!";
+      } else if (err.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      }
+      alert(`Lỗi khi xóa nhóm: ${errorMessage}`);
+      const token = localStorage.getItem("token"); // Khai báo token
+      await fetchGroups(token, user.userID).catch((err) => console.error("Lỗi làm mới danh sách nhóm:", err));
+    }
+  };
 
   const handleSwitchLeader = async () => {
     try {

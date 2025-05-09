@@ -54,7 +54,28 @@ export default function Register() {
     }
 
     try {
-      // Gửi yêu cầu OTP
+      // Kiểm tra số điện thoại đã tồn tại hay chưa
+      try {
+        // Gọi API để lấy danh sách users
+        const response = await axios.get("http://localhost:3000/api/user/");
+        const users = response.data;
+        
+        // Kiểm tra xem số điện thoại đã tồn tại trong danh sách chưa
+        const phoneExists = users.some(user => user.phoneNumber === phoneNumber);
+        
+        if (phoneExists) {
+          setError("Số điện thoại này đã được đăng ký. Vui lòng sử dụng số điện thoại khác.");
+          setIsLoading(false);
+          return;
+        }
+      } catch (checkError) {
+        console.error("Lỗi khi kiểm tra số điện thoại:", checkError);
+        setError("Lỗi khi kiểm tra số điện thoại. Vui lòng thử lại sau.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Gửi yêu cầu OTP nếu số điện thoại chưa tồn tại
       const otpResponse = await axios.post("http://localhost:3000/api/OTP/send", {
         gmail,
       });
@@ -62,6 +83,7 @@ export default function Register() {
       setStep("otp");
       setError("");
     } catch (err) {
+      console.error("Lỗi khi gửi OTP:", err);
       setError(
         err.response?.data?.message || "Không thể gửi OTP. Vui lòng thử lại."
       );
@@ -85,6 +107,22 @@ export default function Register() {
 
       // Nếu OTP đúng, tiến hành đăng ký
       if (verifyResponse.data.message === "OTP đúng") {
+        // Kiểm tra lại số điện thoại một lần nữa trước khi đăng ký
+        try {
+          const response = await axios.get("http://localhost:3000/api/user/");
+          const users = response.data;
+          const phoneExists = users.some(user => user.phoneNumber === phoneNumber);
+          
+          if (phoneExists) {
+            setError("Số điện thoại này đã được đăng ký. Vui lòng sử dụng số điện thoại khác.");
+            setIsLoading(false);
+            setStep("register");
+            return;
+          }
+        } catch (checkError) {
+          console.error("Lỗi khi kiểm tra số điện thoại:", checkError);
+        }
+
         const registerResponse = await axios.post("http://localhost:3000/api/user/", {
           username,
           phoneNumber,
@@ -104,6 +142,7 @@ export default function Register() {
         navigate("/");
       }
     } catch (err) {
+      console.error("Lỗi khi xác thực OTP hoặc đăng ký:", err);
       setError(
         err.response?.data?.message || err.response?.data || "Xác thực OTP hoặc đăng ký thất bại. Vui lòng thử lại."
       );
@@ -178,7 +217,7 @@ export default function Register() {
               />
             </div>
             <button type="submit" className="register-button" disabled={isLoading}>
-              {isLoading ? "Đang xử lý..." : "Gửi OTP"}
+              {isLoading ? "Đang xử lý..." : "Đăng ký"}
             </button>
             <p className="register-link">
               Đã có tài khoản? <a href="/">Đăng nhập</a>

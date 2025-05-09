@@ -53,25 +53,38 @@ export default function Home() {
   }, [navigate]);
 
   const fetchChats = useCallback(async (token, userID) => {
-    try {
-      const chatsRes = await axios.get(`http://localhost:3000/api/message/${userID}`, {
-        headers: { Authorization: `Bearer ${token}` },
+  try {
+    const chatsRes = await axios.get(`http://localhost:3000/api/message/${userID}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (Array.isArray(chatsRes.data)) {
+      const sortedChats = chatsRes.data.sort((a, b) => {
+        // Kiểm tra tin nhắn chưa xem
+        const hasUnreadA = a.messages.some(
+          (msg) => msg.senderID !== userID && !msg.seenStatus.includes(userID)
+        );
+        const hasUnreadB = b.messages.some(
+          (msg) => msg.senderID !== userID && !msg.seenStatus.includes(userID)
+        );
+
+        // Ưu tiên cuộc trò chuyện có tin nhắn chưa xem
+        if (hasUnreadA && !hasUnreadB) return -1;
+        if (!hasUnreadA && hasUnreadB) return 1;
+
+        // Nếu không có sự khác biệt về trạng thái chưa xem, sắp xếp theo thời gian
+        const lastMessageA = a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
+        const lastMessageB = b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
+        return lastMessageB - lastMessageA;
       });
-      if (Array.isArray(chatsRes.data)) {
-        const sortedChats = chatsRes.data.sort((a, b) => {
-          const lastMessageA = a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
-          const lastMessageB = b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
-          return lastMessageB - lastMessageA;
-        });
-        setChatList(sortedChats);
-      } else {
-        setChatList([]);
-      }
-    } catch (err) {
-      console.error("Error fetching chats:", err.response?.data || err.message);
+      setChatList(sortedChats);
+    } else {
       setChatList([]);
     }
-  }, []);
+  } catch (err) {
+    console.error("Error fetching chats:", err.response?.data || err.message);
+    setChatList([]);
+  }
+}, []);
 
   const fetchGroups = useCallback(async (token, userID) => {
     try {
@@ -180,145 +193,157 @@ export default function Home() {
   }, [navigate, refreshAccessToken, fetchChats, fetchGroups]);
 
   useEffect(() => {
-    socket.on("receiveMessage", async (message) => {
-      if (message.groupID && message.groupID !== "NONE") {
-        setGroupList((prevGroupList) => {
-          const groupIndex = prevGroupList.findIndex((g) => g.group.groupID === message.groupID);
-          if (groupIndex >= 0) {
-            const updatedGroupList = [...prevGroupList];
-            updatedGroupList[groupIndex].messages.push(message);
-            return [
-              updatedGroupList[groupIndex],
-              ...updatedGroupList.slice(0, groupIndex),
-              ...updatedGroupList.slice(groupIndex + 1),
-            ].sort((a, b) => {
-              const lastMessageA = a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
-              const lastMessageB = b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
-              return lastMessageB - lastMessageA;
-            });
-          }
-          return prevGroupList;
-        });
-      } else {
-        const token = localStorage.getItem("token");
-        try {
-          const senderRes = await axios.get(`http://localhost:3000/api/user/${message.senderID}`, {
-            headers: { Authorization: `Bearer ${token}` },
+  socket.on("receiveMessage", async (message) => {
+    if (message.groupID && message.groupID !== "NONE") {
+      // Xử lý tin nhắn nhóm (giữ nguyên)
+      setGroupList((prevGroupList) => {
+        const groupIndex = prevGroupList.findIndex((g) => g.group.groupID === message.groupID);
+        if (groupIndex >= 0) {
+          const updatedGroupList = [...prevGroupList];
+          updatedGroupList[groupIndex].messages.push(message);
+          return [
+            updatedGroupList[groupIndex],
+            ...updatedGroupList.slice(0, groupIndex),
+            ...updatedGroupList.slice(groupIndex + 1),
+          ].sort((a, b) => {
+            const lastMessageA = a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
+            const lastMessageB = b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
+            return lastMessageB - lastMessageA;
           });
-          const sender = senderRes.data;
-
-          setChatList((prevChatList) => {
-            const existingChatIndex = prevChatList.findIndex(
-              (chat) => chat.conversation.userID === message.senderID
-            );
-
-            if (existingChatIndex >= 0) {
-              const updatedChatList = [...prevChatList];
-              updatedChatList[existingChatIndex].messages.push(message);
-              return [
-                updatedChatList[existingChatIndex],
-                ...updatedChatList.slice(0, existingChatIndex),
-                ...updatedChatList.slice(existingChatIndex + 1),
-              ].sort((a, b) => {
-                const lastMessageA = a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
-                const lastMessageB = b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
-                return lastMessageB - lastMessageA;
-              });
-            } else {
-              const newChat = {
-                conversation: {
-                  userID: message.senderID,
-                  username: sender.username,
-                  avatar: sender.avatar || "NONE",
-                },
-                messages: [message],
-              };
-              return [newChat, ...prevChatList].sort((a, b) => {
-                const lastMessageA = a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
-                const lastMessageB = b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
-                return lastMessageB - lastMessageA;
-              });
-            }
-          });
-        } catch (err) {
-          console.error("Lỗi khi lấy thông tin người gửi:", err);
         }
-      }
-    });
+        return prevGroupList;
+      });
+    } else {
+      const token = localStorage.getItem("token");
+      try {
+        const senderRes = await axios.get(`http://localhost:3000/api/user/${message.senderID}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const sender = senderRes.data;
 
-    socket.on("updateChatList", (data) => {
-      if (data.userID === user?.userID) {
         setChatList((prevChatList) => {
           const existingChatIndex = prevChatList.findIndex(
-            (chat) => chat.conversation.userID === data.partnerID
+            (chat) => chat.conversation.userID === message.senderID
           );
 
+          let updatedChatList;
           if (existingChatIndex >= 0) {
-            const updatedChatList = [...prevChatList];
-            updatedChatList[existingChatIndex].messages.push(data.message);
-            return [
-              updatedChatList[existingChatIndex],
-              ...updatedChatList.slice(0, existingChatIndex),
-              ...updatedChatList.slice(existingChatIndex + 1),
-            ].sort((a, b) => {
-              const lastMessageA = a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
-              const lastMessageB = b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
-              return lastMessageB - lastMessageA;
-            });
+            updatedChatList = [...prevChatList];
+            updatedChatList[existingChatIndex].messages.push(message);
           } else {
             const newChat = {
               conversation: {
-                userID: data.partnerID,
-                username: data.partnerUsername,
-                avatar: data.partnerAvatar,
+                userID: message.senderID,
+                username: sender.username,
+                avatar: sender.avatar || "NONE",
               },
-              messages: [data.message],
+              messages: [message],
             };
-            return [newChat, ...prevChatList].sort((a, b) => {
-              const lastMessageA = a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
-              const lastMessageB = b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
-              return lastMessageB - lastMessageA;
-            });
+            updatedChatList = [newChat, ...prevChatList];
           }
+
+          // Sắp xếp lại danh sách hội thoại
+          return updatedChatList.sort((a, b) => {
+            const hasUnreadA = a.messages.some(
+              (msg) => msg.senderID !== user?.userID && !msg.seenStatus.includes(user?.userID)
+            );
+            const hasUnreadB = b.messages.some(
+              (msg) => msg.senderID !== user?.userID && !msg.seenStatus.includes(user?.userID)
+            );
+
+            if (hasUnreadA && !hasUnreadB) return -1;
+            if (!hasUnreadA && hasUnreadB) return 1;
+
+            const lastMessageA = a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
+            const lastMessageB = b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
+            return lastMessageB - lastMessageA;
+          });
         });
+      } catch (err) {
+        console.error("Lỗi khi lấy thông tin người gửi:", err);
       }
-    });
+    }
+  });
 
-    socket.on("groupCreated", ({ groupID }) => {
-      fetchGroups(localStorage.getItem("token"), user.userID);
-    });
+ socket.on("updateChatList", (data) => {
+  if (data.userID === user?.userID) {
+    setChatList((prevChatList) => {
+      const existingChatIndex = prevChatList.findIndex(
+        (chat) => chat.conversation.userID === data.partnerID
+      );
 
-    socket.on("groupRenamed", ({ groupID: renamedGroupID }) => {
-      fetchGroups(localStorage.getItem("token"), user.userID);
-    });
+      let updatedChatList;
+      if (existingChatIndex >= 0) {
+        updatedChatList = [...prevChatList];
+        updatedChatList[existingChatIndex].messages.push(data.message);
+      } else {
+        const newChat = {
+          conversation: {
+            userID: data.partnerID,
+            username: data.partnerUsername,
+            avatar: data.partnerAvatar,
+          },
+          messages: [data.message],
+        };
+        updatedChatList = [newChat, ...prevChatList];
+      }
 
-    socket.on("memberAdded", ({ groupID: updatedGroupID }) => {
-      fetchGroups(localStorage.getItem("token"), user.userID);
-    });
+      // Sắp xếp lại chatList
+      return updatedChatList.sort((a, b) => {
+        const hasUnreadA = a.messages.some(
+          (msg) => msg.senderID !== user?.userID && !msg.seenStatus.includes(user?.userID)
+        );
+        const hasUnreadB = b.messages.some(
+          (msg) => msg.senderID !== user?.userID && !msg.seenStatus.includes(user?.userID)
+        );
 
-    socket.on("memberKicked", ({ groupID: updatedGroupID }) => {
-      fetchGroups(localStorage.getItem("token"), user.userID);
-    });
+        if (hasUnreadA && !hasUnreadB) return -1;
+        if (!hasUnreadA && hasUnreadB) return 1;
 
-    socket.on("memberLeft", ({ groupID: updatedGroupID }) => {
-      fetchGroups(localStorage.getItem("token"), user.userID);
+        const lastMessageA = a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
+        const lastMessageB = b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
+        return lastMessageB - lastMessageA;
+      });
     });
+  }
+});
 
-    socket.on("leaderSwitched", ({ groupID: updatedGroupID }) => {
-      fetchGroups(localStorage.getItem("token"), user.userID);
-    });
+  // Các sự kiện socket khác giữ nguyên
+  socket.on("groupCreated", ({ groupID }) => {
+    fetchGroups(localStorage.getItem("token"), user.userID);
+  });
 
-    return () => {
-      socket.off("receiveMessage");
-      socket.off("updateChatList");
-      socket.off("groupCreated");
-      socket.off("groupRenamed");
-      socket.off("memberAdded");
-      socket.off("memberKicked");
-      socket.off("memberLeft");
-      socket.off("leaderSwitched");
-    };
-  }, [user, fetchGroups]);
+  socket.on("groupRenamed", ({ groupID: renamedGroupID }) => {
+    fetchGroups(localStorage.getItem("token"), user.userID);
+  });
+
+  socket.on("memberAdded", ({ groupID: updatedGroupID }) => {
+    fetchGroups(localStorage.getItem("token"), user.userID);
+  });
+
+  socket.on("memberKicked", ({ groupID: updatedGroupID }) => {
+    fetchGroups(localStorage.getItem("token"), user.userID);
+  });
+
+  socket.on("memberLeft", ({ groupID: updatedGroupID }) => {
+    fetchGroups(localStorage.getItem("token"), user.userID);
+  });
+
+  socket.on("leaderSwitched", ({ groupID: updatedGroupID }) => {
+    fetchGroups(localStorage.getItem("token"), user.userID);
+  });
+
+  return () => {
+    socket.off("receiveMessage");
+    socket.off("updateChatList");
+    socket.off("groupCreated");
+    socket.off("groupRenamed");
+    socket.off("memberAdded");
+    socket.off("memberKicked");
+    socket.off("memberLeft");
+    socket.off("leaderSwitched");
+  };
+}, [user, fetchGroups]);
 
   const handleSearchUser = async (e) => {
     e.preventDefault();
