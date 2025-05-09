@@ -10,8 +10,8 @@
 }
 
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f5f5f5;
+    font-family: 'Roboto', Arial, sans-serif !important;
+    background-color: #f0f2f5 !important;
 }
 
 .home-container {
@@ -25,7 +25,7 @@ body {
 
 .left-sidebar {
     width: 54px;
-    background-color: #0068ff;
+    background-color: #0088ff !important;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -57,13 +57,11 @@ body {
     position: absolute;
     top: 45px;
     left: 65px;
-    /* Điều chỉnh để dropdown nằm bên phải sidebar */
     background-color: #fff;
     border: none;
     border-radius: 12px;
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
     width: 220px;
-    /* Tăng chiều rộng để thoải mái hơn */
     z-index: 9999;
     overflow: hidden;
     animation: fadeIn 0.2s ease;
@@ -102,7 +100,7 @@ body {
 
 .dropdown-item i {
     font-size: 16px;
-    color: #0068ff;
+    color: #0088ff;
 }
 
 @keyframes fadeIn {
@@ -133,6 +131,7 @@ body {
     color: white;
     opacity: 0.8;
     cursor: pointer;
+    transition: opacity 0.2s ease;
 }
 
 .sidebar-icon:hover {
@@ -141,6 +140,8 @@ body {
 
 .sidebar-icon.active {
     opacity: 1;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
 }
 
 .sidebar-icon i {
@@ -152,7 +153,7 @@ body {
 
 .chat-list-container {
     width: 360px;
-    background-color: white;
+    background-color: white !important;
     border-right: 1px solid #e6e6e6;
     display: flex;
     flex-direction: column;
@@ -164,11 +165,14 @@ body {
     align-items: center;
     justify-content: space-between;
     border-bottom: 1px solid #f0f0f0;
+    background-color: #fff !important;
 }
 
 .search-bar {
     flex-grow: 1;
     margin-right: 16px;
+    display: flex;
+    align-items: center;
 }
 
 .search-bar input {
@@ -179,6 +183,28 @@ body {
     outline: none;
     font-size: 14px;
     background-color: #f5f5f5;
+    transition: border-color 0.2s ease;
+}
+
+.search-bar input:focus {
+    border-color: #0088ff;
+    background-color: #fff;
+}
+
+.search-bar button {
+    padding: 8px 16px;
+    background: #0088ff;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    margin-left: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+}
+
+.search-bar button:hover {
+    background: #0066cc;
 }
 
 .view-options {
@@ -196,15 +222,17 @@ body {
     align-items: center;
     justify-content: center;
     color: #666;
+    transition: color 0.2s ease;
 }
 
 .view-button.active {
-    color: #0068ff;
+    color: #0088ff;
 }
 
 .chat-tabs {
     display: flex;
     border-bottom: 1px solid #f0f0f0;
+    background-color: #fff !important;
 }
 
 .tab {
@@ -215,10 +243,11 @@ body {
     font-size: 14px;
     color: #666;
     position: relative;
+    transition: color 0.2s ease;
 }
 
 .tab.active {
-    color: #0068ff;
+    color: #0088ff;
     font-weight: bold;
 }
 
@@ -229,7 +258,11 @@ body {
     left: 0;
     width: 100%;
     height: 2px;
-    background-color: #0068ff;
+    background-color: #0088ff;
+}
+
+.tab:hover {
+    color: #0088ff;
 }
 
 .tab-options {
@@ -244,6 +277,20 @@ body {
 .chat-list {
     flex-grow: 1;
     overflow-y: auto;
+    background-color: #fff !important;
+}
+
+
+/* Style cho dòng "Chưa có cuộc trò chuyện nào..." */
+
+.chat-list .no-chats-message {
+    font-family: 'Roboto', Arial, sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    color: #666 !important;
+    text-align: center !important;
+    padding: 20px !important;
+    margin: 0 !important;
 }
 
 .chat-item {
@@ -251,14 +298,15 @@ body {
     padding: 12px 16px;
     cursor: pointer;
     border-bottom: 1px solid #f5f5f5;
+    transition: background-color 0.2s ease;
 }
 
 .chat-item:hover {
-    background-color: #f9f9f9;
+    background-color: #f0f2f5;
 }
 
 .chat-item.active {
-    background-color: #f0f6ff;
+    background-color: #e6f0ff !important;
 }
 
 .chat-avatar {
@@ -300,14 +348,17 @@ body {
 }
 
 .chat-name {
-    font-weight: bold;
-    font-size: 14px;
-    margin-bottom: 4px;
+    font-family: 'Roboto', Arial, sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 15px !important;
+    margin-bottom: 4px !important;
+    color: #333 !important;
 }
 
 .chat-last-message {
-    font-size: 13px;
-    color: #666;
+    font-family: 'Roboto', Arial, sans-serif !important;
+    font-size: 13px !important;
+    color: #666 !important;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -327,14 +378,21 @@ body {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    background-color: #f5f5f5;
+    background-color: #e5e5e5 !important;
+    position: relative;
 }
 
-.chat-content.empty {
+.chat-content .empty {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #f5f5f5;
+    background-color: #e5e5e5 !important;
+    font-family: 'Roboto', Arial, sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    color: #666 !important;
+    text-align: center !important;
+    padding: 20px !important;
 }
 
 
@@ -419,7 +477,7 @@ body {
 }
 
 .form-group input:focus {
-    border: 1px solid #0068ff;
+    border: 1px solid #0088ff;
     background-color: #fff;
 }
 
@@ -478,4 +536,245 @@ body {
 .save-button:active,
 .cancel-button:active {
     transform: translateY(0);
+}
+
+
+/* Kiểu dáng cho search bar */
+
+.search-bar {
+    display: flex;
+    flex: 1;
+    margin-right: 10px;
+}
+
+.search-bar input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+}
+
+.search-bar button {
+    padding: 8px 16px;
+    background: #0088ff;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    margin-left: 10px;
+    cursor: pointer;
+}
+
+.search-result {
+    padding: 10px;
+    background: #fff;
+    border-bottom: 1px solid #ddd;
+}
+
+.search-result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.search-result-item button {
+    padding: 6px 12px;
+    background: #0088ff;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.search-result-item button:hover {
+    background: #0066cc;
+}
+
+.error-message {
+    color: red;
+    padding: 10px;
+    font-size: 14px;
+}
+
+
+/* Kiểu dáng cho tab */
+
+.chat-tabs {
+    display: flex;
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    background-color: #fff !important;
+}
+
+.tab {
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #666;
+    transition: color 0.2s ease;
+}
+
+.tab.active {
+    color: #0088ff;
+    border-bottom: 2px solid #0088ff;
+}
+
+.tab-options {
+    margin-left: auto;
+    padding: 8px;
+    cursor: pointer;
+}
+
+.delete-menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.delete-menu {
+    background: white;
+    padding: 20px;
+    border-radius: 5px;
+    width: 300px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.delete-menu h3 {
+    margin-top: 0;
+}
+
+.delete-menu ul {
+    list-style: none;
+    padding: 0;
+}
+
+.delete-menu li {
+    margin: 10px 0;
+}
+
+.delete-menu button {
+    background: none;
+    border: none;
+    color: blue;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+}
+
+.delete-menu button:hover {
+    text-decoration: underline;
+}
+
+.chat-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    cursor: pointer;
+}
+
+.chat-avatar img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.chat-info {
+    flex-grow: 1;
+}
+
+.delete-option {
+    margin-left: auto;
+}
+
+.delete-option i {
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.group-avatar {
+    position: relative;
+    width: 40px;
+    height: 40px;
+}
+
+.group-avatar img {
+    position: absolute;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.group-avatar .avatar-0 {
+    top: 0;
+    left: 0;
+}
+
+.group-avatar .avatar-1 {
+    top: 10px;
+    left: 10px;
+}
+
+.group-avatar .avatar-2 {
+    top: 20px;
+    left: 20px;
+}
+
+create-group-btn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 14px;
+    margin: 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background-color 0.2s ease;
+}
+
+.create-group-btn:hover {
+    background: #0056b3;
+}
+
+.group-options-button {
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #007bff;
+}
+
+.group-options-menu {
+    position: absolute;
+    background: white;
+    border-radius: 5px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    padding: 5px 0;
+    min-width: 150px;
+    right: 15px;
+    top: 60px;
+}
+
+.group-options-item {
+    padding: 8px 12px;
+    font-size: 13px;
+    color: #333;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.group-options-item:hover {
+    background-color: #f0f2f5;
 }
