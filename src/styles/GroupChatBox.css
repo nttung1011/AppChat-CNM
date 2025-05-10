@@ -293,3 +293,54 @@
     background-color: #c82333;
     transform: translateY(-2px);
 }
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+
+/* Style cho label */
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+
+/* Style cho input đổi tên nhóm */
+
+.rename-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.3s ease;
+}
+
+.rename-input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+
+
+/* Style cho thông báo lỗi */
+
+.error-message {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+
+/* Style cho nút Lưu khi bị vô hiệu hóa */
+
+.save-button:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
