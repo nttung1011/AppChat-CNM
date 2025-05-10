@@ -69,7 +69,7 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
   useEffect(() => {
     fetchGroupInfo();
     fetchContacts();
-    socket.emit("joinGroup", user.userID, groupID);
+    //socket.emit("joinGroup", user.userID, groupID);
   }, [fetchGroupInfo, fetchContacts, user.userID, groupID]);
 
   useEffect(() => {
@@ -145,7 +145,7 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
       socket.off("memberLeft");
       socket.off("leaderSwitched");
     };
-  }, [groupID, onBack, user.userID, fetchGroups]);
+  }, [groupID, onBack, user.userID, fetchGroups,onBack]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -166,11 +166,11 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
       };
 
       socket.emit("sendMessage", message);
-      await axios.post(
-        "http://localhost:3000/api/message",
-        { ...message, receiverID: "NONE" },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      // await axios.post(
+      //   "http://localhost:3000/api/message",
+      //   { ...message, receiverID: "NONE" },
+      //   { headers: { Authorization: `Bearer ${token}` } }
+      // );
       setMessages((prev) => [...prev, message]);
       setNewMessage("");
     } catch (err) {
@@ -182,15 +182,15 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
     try {
       const token = localStorage.getItem("token");
       for (const contactID of selectedContacts) {
-        const joinRes = await axios.put(
-          "http://localhost:3000/api/group/join",
-          { userID: contactID, groupID },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (joinRes.status !== 200) {
-          throw new Error(`Không thể thêm thành viên ${contactID}`);
-        }
-        socket.emit("addMember", { groupID, userID: contactID });
+        // const joinRes = await axios.put(
+        //   "http://localhost:3000/api/group/join",
+        //   { userID: contactID, groupID },
+        //   { headers: { Authorization: `Bearer ${token}` } }
+        // );
+        // if (joinRes.status !== 200) {
+        //   throw new Error(`Không thể thêm thành viên ${contactID}`);
+        // }
+        socket.emit("addGroupMember",  user.userID ,groupID,()=>{});
       }
       setSelectedContacts([]);
       setShowAddMemberModal(false);
@@ -206,12 +206,15 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
   const handleKickMember = async () => {
     try {
       const token = localStorage.getItem("token");
-      await axios.put(
-        `http://localhost:3000/api/group/kick`,
-        { userID: selectedMemberToKick.userID, groupID },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      socket.emit("kickMember", { groupID, userID: selectedMemberToKick.userID });
+      // await axios.put(
+      //   `http://localhost:3000/api/group/kick`,
+      //   { userID: selectedMemberToKick.userID, groupID },
+      //   { headers: { Authorization: `Bearer ${token}` } }
+      // );
+      socket.emit("kickMember",user.userID, selectedMemberToKick, groupID, ()=>{
+        console.log("kick thanh cong");
+        
+      });
       setShowKickMemberModal(false);
       setSelectedMemberToKick(null);
       fetchGroupInfo();
@@ -230,12 +233,12 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
     }
     try {
       const token = localStorage.getItem("token");
-      await axios.put(
-        `http://localhost:3000/api/group/rename`,
-        { groupID, newGroupName },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      socket.emit("renameGroup", { groupID, newGroupName });
+      // await axios.put(
+      //   `http://localhost:3000/api/group/rename`,
+      //   { groupID, newGroupName },
+      //   { headers: { Authorization: `Bearer ${token}` } }
+      // );
+      socket.emit("renameGroup", groupID, newGroupName,()=>{});
       setShowRenameModal(false);
       setNewGroupName("");
       fetchGroupInfo();
@@ -250,12 +253,12 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
   const handleLeaveGroup = async () => {
     try {
       const token = localStorage.getItem("token");
-      await axios.put(
-        `http://localhost:3000/api/group/leave`,
-        { userID: user.userID, groupID },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      socket.emit("leaveGroup", { groupID, userID: user.userID });
+      // await axios.put(
+      //   `http://localhost:3000/api/group/leave`,
+      //   { userID: user.userID, groupID },
+      //   { headers: { Authorization: `Bearer ${token}` } }
+      // );
+      socket.emit("leaveGroup",user.userID, groupID,()=>{});
       alert("Rời nhóm thành công!");
       await fetchGroups(token, user.userID);
       onBack();
@@ -265,56 +268,40 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
     }
   };
 
-  const handleDeleteGroup = async () => {
-    const isLeader = members.find((m) => m.userID === user.userID)?.memberRole === "LEADER";
-    if (!isLeader) {
-      alert("Chỉ Leader mới có quyền xóa nhóm!");
-      return;
-    }
+ const handleDeleteGroup = async () => {
+  const isLeader = members.find((m) => m.userID === user.userID)?.memberRole === "LEADER";
+  if (!isLeader) {
+    alert("Chỉ Leader mới có quyền xóa nhóm!");
+    return;
+  }
 
-    const confirmDelete = window.confirm("Bạn có chắc chắn muốn xóa nhóm này không? Hành động này không thể hoàn tác.");
-    if (!confirmDelete) return;
+  const confirmDelete = window.confirm("Bạn có chắc chắn muốn xóa nhóm này không?");
+  if (!confirmDelete) return;
 
-    try {
-      const token = localStorage.getItem("token");
-      console.log("Gửi yêu cầu xóa nhóm với groupID:", groupID);
-      const response = await axios.delete(`http://localhost:3000/api/group/${groupID}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (response.status === 200) {
-        socket.emit("deleteGroup", groupID);
-        alert("Xóa nhóm thành công!");
-        await fetchGroups(token, user.userID);
-        onBack();
-      } else {
-        throw new Error("Phản hồi từ server không như mong đợi!");
-      }
-    } catch (err) {
-      console.error("Lỗi khi xóa nhóm:", err.response?.data || err.message);
-      let errorMessage = "Không thể xóa nhóm, vui lòng thử lại!";
-      if (err.response?.status === 404) {
-        errorMessage = "Nhóm không tồn tại hoặc đã bị xóa!";
-      } else if (err.response?.status === 403) {
-        errorMessage = "Bạn không có quyền xóa nhóm này!";
-      } else if (err.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      }
-      alert(`Lỗi khi xóa nhóm: ${errorMessage}`);
-      const token = localStorage.getItem("token"); // Khai báo token
-      await fetchGroups(token, user.userID).catch((err) => console.error("Lỗi làm mới danh sách nhóm:", err));
-    }
-  };
+  try {
+    const token = localStorage.getItem("token");
+    // const response = await axios.delete(`http://localhost:3000/api/group/${groupID}`, {
+    //   headers: { Authorization: `Bearer ${token}` },
+    // });
+    console.log("Xóa nhóm thành công:");
+    socket.emit("deleteGroup", user.userID,groupID,()=>{}); // Phát sự kiện xóa nhóm
+    await fetchGroups(token, user.userID);
+    onBack();
+  } catch (err) {
+    console.error("Lỗi khi xóa nhóm:", err.response?.data || err.message);
+    alert("Không thể xóa nhóm. Vui lòng thử lại!");
+  }
+};
 
   const handleSwitchLeader = async () => {
     try {
       const token = localStorage.getItem("token");
-      await axios.put(
-        `http://localhost:3000/api/group/switchRole`,
-        { userID: user.userID, targetUserID: selectedMemberToLead.userID, groupID },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      socket.emit("switchLeader", { groupID, targetUserID: selectedMemberToLead.userID });
+      // await axios.put(
+      //   `http://localhost:3000/api/group/switchRole`,
+      //   { userID: user.userID, targetUserID: selectedMemberToLead.userID, groupID },
+      //   { headers: { Authorization: `Bearer ${token}` } }
+      // );
+      socket.emit("switchRole",user.userID, selectedMemberToLead, groupID,()=>{} );
       setShowSwitchLeaderModal(false);
       setSelectedMemberToLead(null);
       fetchGroupInfo();
@@ -500,31 +487,45 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
       )}
 
       {showRenameModal && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal-header">
-              <h2>Đổi tên nhóm</h2>
-              <button className="modal-close" onClick={() => setShowRenameModal(false)}>
-                <i className="fas fa-times"></i>
-              </button>
-            </div>
-            <input
-              type="text"
-              value={newGroupName}
-              onChange={(e) => setNewGroupName(e.target.value)}
-              placeholder="Nhập tên nhóm mới"
-            />
-            <div className="modal-buttons">
-              <button className="save-button" onClick={handleRenameGroup}>
-                Lưu
-              </button>
-              <button className="cancel-button" onClick={() => setShowRenameModal(false)}>
-                Hủy
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+  <div className="modal-overlay">
+    <div className="modal">
+      <div className="modal-header">
+        <h2>Đổi tên nhóm</h2>
+        <button className="modal-close" onClick={() => setShowRenameModal(false)}>
+          <i className="fas fa-times"></i>
+        </button>
+      </div>
+      <div className="form-group">
+        <label htmlFor="newGroupName">Tên nhóm mới</label>
+        <input
+          type="text"
+          id="newGroupName"
+          value={newGroupName}
+          onChange={(e) => setNewGroupName(e.target.value)}
+          placeholder="Nhập tên nhóm mới..."
+          className="rename-input"
+          maxLength={50} // Giới hạn độ dài tên nhóm
+          autoFocus
+        />
+        {newGroupName.trim().length === 0 && (
+          <p className="error-message">Tên nhóm không được để trống!</p>
+        )}
+      </div>
+      <div className="modal-buttons">
+        <button
+          className="save-button"
+          onClick={handleRenameGroup}
+          disabled={!newGroupName.trim()} // Vô hiệu hóa nút nếu tên nhóm trống
+        >
+          Lưu
+        </button>
+        <button className="cancel-button" onClick={() => setShowRenameModal(false)}>
+          Hủy
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       {showSwitchLeaderModal && (
         <div className="modal-overlay">
