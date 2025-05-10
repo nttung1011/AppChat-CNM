@@ -41,36 +41,45 @@ export default function ChatBox({ user, partnerID, onBack }) {
     };
   }, [user]);
 
-  useEffect(() => {
-    socket.on("receiveMessage", (message) => {
+ useEffect(() => {
+  console.log("Thiết lập lắng nghe sự kiện Socket.IO cho partnerID:", partnerID);
+
+  socket.on("receiveMessage", (message) => {
+    console.log("Tin nhắn mới nhận được:", message);
+    if (message.senderID === partnerID || message.receiverID === partnerID) {
       setMessages((prev) => [...prev, message]);
-    });
+    }
+  });
 
-    socket.on("updateSingleChatSeenStatus", (messageID) => {
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.messageID === messageID
-            ? { ...msg, seenStatus: [...msg.seenStatus, partnerID] }
-            : msg
-        )
-      );
-    });
+  socket.on("updateSingleChatSeenStatus", (messageID) => {
+    console.log("Cập nhật trạng thái seen:", messageID);
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.messageID === messageID
+          ? { ...msg, seenStatus: [...msg.seenStatus, partnerID] }
+          : msg
+      )
+    );
+  });
 
-    socket.on("deletedSingleMessage", (messageID) => {
-      setMessages((prev) => prev.filter((msg) => msg.messageID !== messageID));
-    });
+  socket.on("deletedSingleMessage", (messageID) => {
+    console.log("Xóa tin nhắn:", messageID);
+    setMessages((prev) => prev.filter((msg) => msg.messageID !== messageID));
+  });
 
-    socket.on("recalledSingleMessage", (messageID) => {
-      setMessages((prev) => prev.filter((msg) => msg.messageID !== messageID));
-    });
+  socket.on("recalledSingleMessage", (messageID) => {
+    console.log("Thu hồi tin nhắn:", messageID);
+    setMessages((prev) => prev.filter((msg) => msg.messageID !== messageID));
+  });
 
-    return () => {
-      socket.off("receiveMessage");
-      socket.off("updateSingleChatSeenStatus");
-      socket.off("deletedSingleMessage");
-      socket.off("recalledSingleMessage");
-    };
-  }, [partnerID]);
+  return () => {
+    console.log("Dọn dẹp sự kiện Socket.IO");
+    socket.off("receiveMessage");
+    socket.off("updateSingleChatSeenStatus");
+    socket.off("deletedSingleMessage");
+    socket.off("recalledSingleMessage");
+  };
+}, [partnerID]);
 
   useEffect(() => {
     const fetchData = async () => {
