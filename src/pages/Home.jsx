@@ -31,7 +31,36 @@ export default function Home() {
   const [selectedContactToDelete, setSelectedContactToDelete] = useState(null);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [groupName, setGroupName] = useState("");
+  const [currentSlide, setCurrentSlide] = useState(0);
   const navigate = useNavigate();
+
+  const thumbnails = [
+    {
+      id: 1,
+      image: "https://cdn-media.sforum.vn/storage/app/media/ctvseo_phung/zalo-gioi-han-bao-nhieu-ban-be/zalo-gioi-han-bao-nhieu-ban-be-thumb.jpg",
+      title: "Tính năng nổi bật",
+      description: "Kết nối với bạn bè mọi lúc, mọi nơi.",
+    },
+    {
+      id: 2,
+      image: "https://didongviet.vn/dchannel/wp-content/uploads/2021/12/nhom-zalo-didongviet.jpg",
+      title: "Tính năng nổi bật",
+      description: "Tạo nhóm chat và làm việc hiệu quả.",
+    },
+    {
+      id: 3,
+      image: "https://i0.wp.com/help.zalo.me/wp-content/uploads/2023/12/LanguageVIE.png?fit=4200%2C2730&ssl=1 ",
+      title: "Tính năng nổi bật",
+      description: "Trải nghiệm giao tiếp liền mạch.",
+    },
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % thumbnails.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [thumbnails.length]);
 
   const refreshAccessToken = useCallback(async () => {
     try {
@@ -776,7 +805,35 @@ export default function Home() {
         ) : selectedGroup ? (
           <GroupChatBox user={user} groupID={selectedGroup} onBack={handleBackToChatList} fetchGroups={fetchGroups} />
         ) : (
-          <div className="empty">Chọn một cuộc trò chuyện, nhóm hoặc liên hệ để bắt đầu</div>
+          <div className="welcome-content">
+            <div className="welcome-text-wrapper">
+              <h2 className="welcome-text">Chào mừng đến với ChatApp!</h2>
+              <p className="welcome-subtext">Khám phá những tiện ích hỗ trợ làm việc và trò chuyện.</p>
+            </div>
+            <div className="thumbnail-carousel">
+              {thumbnails.map((thumb, index) => (
+                <div
+                  key={thumb.id}
+                  className={`thumbnail-slide ${index === currentSlide ? "active" : ""}`}
+                >
+                  <div className="thumbnail-image-wrapper">
+                    <img src={thumb.image} alt="ChatApp Features" className="thumbnail-image" />
+                  </div>
+                  <p className="thumbnail-title">{thumb.title}</p>
+                  <p className="thumbnail-description">{thumb.description}</p>
+                </div>
+              ))}
+              <div className="thumbnail-dots">
+                {thumbnails.map((_, index) => (
+                  <span
+                    key={index}
+                    className={`dot ${index === currentSlide ? "active" : ""}`}
+                    onClick={() => setCurrentSlide(index)}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
