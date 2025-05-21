@@ -1,8 +1,3 @@
-/* src/styles/Home.css */
-
-
-/* Reset CSS */
-
 * {
     margin: 0;
     padding: 0;
@@ -131,11 +126,12 @@ body {
     color: white;
     opacity: 0.8;
     cursor: pointer;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .sidebar-icon:hover {
     opacity: 1;
+    transform: scale(1.1);
 }
 
 .sidebar-icon.active {
@@ -153,10 +149,11 @@ body {
 
 .chat-list-container {
     width: 360px;
-    background-color: white !important;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
     border-right: 1px solid #e6e6e6;
     display: flex;
     flex-direction: column;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
 }
 
 .chat-list-header {
@@ -183,12 +180,13 @@ body {
     outline: none;
     font-size: 14px;
     background-color: #f5f5f5;
-    transition: border-color 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .search-bar input:focus {
     border-color: #0088ff;
     background-color: #fff;
+    box-shadow: 0 0 5px rgba(0, 136, 255, 0.2);
 }
 
 .search-bar button {
@@ -200,84 +198,19 @@ body {
     margin-left: 10px;
     cursor: pointer;
     font-size: 14px;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
 .search-bar button:hover {
     background: #0066cc;
-}
-
-.view-options {
-    display: flex;
-    gap: 8px;
-}
-
-.view-button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #666;
-    transition: color 0.2s ease;
-}
-
-.view-button.active {
-    color: #0088ff;
-}
-
-.chat-tabs {
-    display: flex;
-    border-bottom: 1px solid #f0f0f0;
-    background-color: #fff !important;
-}
-
-.tab {
-    padding: 12px 16px;
-    flex-grow: 1;
-    text-align: center;
-    cursor: pointer;
-    font-size: 14px;
-    color: #666;
-    position: relative;
-    transition: color 0.2s ease;
-}
-
-.tab.active {
-    color: #0088ff;
-    font-weight: bold;
-}
-
-.tab.active::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background-color: #0088ff;
-}
-
-.tab:hover {
-    color: #0088ff;
-}
-
-.tab-options {
-    padding: 12px 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #666;
+    transform: scale(1.05);
 }
 
 .chat-list {
     flex-grow: 1;
     overflow-y: auto;
     background-color: #fff !important;
+    border-top: 1px solid #f0f0f0;
 }
 
 
@@ -293,16 +226,26 @@ body {
     margin: 0 !important;
 }
 
+.no-groups-container {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.no-groups-container .create-group-btn {
+    margin-bottom: 10px;
+}
+
 .chat-item {
     display: flex;
     padding: 12px 16px;
     cursor: pointer;
     border-bottom: 1px solid #f5f5f5;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
 .chat-item:hover {
     background-color: #f0f2f5;
+    transform: translateX(5px);
 }
 
 .chat-item.active {
@@ -315,6 +258,7 @@ body {
     border-radius: 50%;
     overflow: hidden;
     margin-right: 12px;
+    border: 2px solid #ddd;
 }
 
 .chat-avatar img {
@@ -364,13 +308,6 @@ body {
     text-overflow: ellipsis;
 }
 
-.chat-time {
-    font-size: 12px;
-    color: #999;
-    align-self: flex-start;
-    margin-top: 4px;
-}
-
 
 /* Phần nội dung chat */
 
@@ -382,17 +319,115 @@ body {
     position: relative;
 }
 
-.chat-content .empty {
+.welcome-content {
+    flex-grow: 1;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    padding: 20px;
     background-color: #e5e5e5 !important;
+}
+
+.welcome-text-wrapper {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.welcome-text {
+    font-family: 'Roboto', Arial, sans-serif !important;
+    font-size: 24px !important;
+    font-weight: 600 !important;
+    color: #333 !important;
+    margin-bottom: 10px !important;
+}
+
+.welcome-subtext {
     font-family: 'Roboto', Arial, sans-serif !important;
     font-size: 16px !important;
-    font-weight: 500 !important;
+    font-weight: 400 !important;
+    color: #666 !important;
+}
+
+.thumbnail-carousel {
+    width: 100%;
+    max-width: 400px;
+    position: relative;
+    overflow: hidden;
+}
+
+.thumbnail-slide {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.thumbnail-slide.active {
+    display: flex;
+    opacity: 1;
+}
+
+.thumbnail-image-wrapper {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 15px;
+    background-color: #fff;
+    /* Nền trắng để che khoảng trắng */
+}
+
+.thumbnail-image {
+    max-width: 100%;
+    height: auto;
+    /* Chiều cao tự động điều chỉnh dựa trên ảnh */
+    object-fit: contain;
+    /* Đảm bảo ảnh hiển thị đầy đủ */
+}
+
+.thumbnail-title {
+    font-family: 'Roboto', Arial, sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    color: #0088ff !important;
+    /* Màu xanh */
+    text-align: center !important;
+    margin-bottom: 5px !important;
+}
+
+.thumbnail-description {
+    font-family: 'Roboto', Arial, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
     color: #666 !important;
     text-align: center !important;
-    padding: 20px !important;
+    max-width: 400px;
+}
+
+.thumbnail-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    background-color: #ccc;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.dot.active {
+    background-color: #0088ff;
 }
 
 
@@ -597,107 +632,7 @@ body {
 }
 
 
-/* Kiểu dáng cho tab */
-
-.chat-tabs {
-    display: flex;
-    padding: 10px;
-    border-bottom: 1px solid #ddd;
-    background-color: #fff !important;
-}
-
-.tab {
-    padding: 8px 16px;
-    cursor: pointer;
-    font-size: 14px;
-    color: #666;
-    transition: color 0.2s ease;
-}
-
-.tab.active {
-    color: #0088ff;
-    border-bottom: 2px solid #0088ff;
-}
-
-.tab-options {
-    margin-left: auto;
-    padding: 8px;
-    cursor: pointer;
-}
-
-.delete-menu-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.delete-menu {
-    background: white;
-    padding: 20px;
-    border-radius: 5px;
-    width: 300px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.delete-menu h3 {
-    margin-top: 0;
-}
-
-.delete-menu ul {
-    list-style: none;
-    padding: 0;
-}
-
-.delete-menu li {
-    margin: 10px 0;
-}
-
-.delete-menu button {
-    background: none;
-    border: none;
-    color: blue;
-    cursor: pointer;
-    text-align: left;
-    width: 100%;
-}
-
-.delete-menu button:hover {
-    text-decoration: underline;
-}
-
-.chat-item {
-    display: flex;
-    align-items: center;
-    padding: 10px;
-    cursor: pointer;
-}
-
-.chat-avatar img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    margin-right: 10px;
-}
-
-.chat-info {
-    flex-grow: 1;
-}
-
-.delete-option {
-    margin-left: auto;
-}
-
-.delete-option i {
-    cursor: pointer;
-    font-size: 18px;
-}
+/* Kiểu dáng cho avatar nhóm */
 
 .group-avatar {
     position: relative;
@@ -728,53 +663,67 @@ body {
     left: 20px;
 }
 
-create-group-btn {
-    background: #007bff;
+
+/* Kiểu dáng cho nút Tạo Nhóm */
+
+.create-group-btn {
+    background: #28a745;
     color: white;
     border: none;
-    padding: 8px 15px;
+    padding: 8px 16px;
     border-radius: 20px;
     cursor: pointer;
     font-size: 14px;
-    margin: 10px;
+    font-weight: 500;
     display: flex;
     align-items: center;
-    gap: 5px;
-    transition: background-color 0.2s ease;
+    gap: 6px;
+    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin: 0 auto;
 }
 
 .create-group-btn:hover {
-    background: #0056b3;
+    background: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-.group-options-button {
-    background: none;
-    border: none;
-    font-size: 18px;
-    cursor: pointer;
-    color: #007bff;
+.create-group-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.group-options-menu {
+.create-group-btn i {
+    font-size: 16px;
+}
+
+
+/* Tooltip cho nút Tạo Nhóm */
+
+.create-group-btn {
+    position: relative;
+}
+
+.create-group-btn::after {
+    content: attr(title);
     position: absolute;
-    background: white;
-    border-radius: 5px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
     z-index: 1000;
-    padding: 5px 0;
-    min-width: 150px;
-    right: 15px;
-    top: 60px;
 }
 
-.group-options-item {
-    padding: 8px 12px;
-    font-size: 13px;
-    color: #333;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.group-options-item:hover {
-    background-color: #f0f2f5;
+.create-group-btn:hover::after {
+    opacity: 1;
+    visibility: visible;
 }
