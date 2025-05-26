@@ -171,7 +171,6 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
       //   { ...message, receiverID: "NONE" },
       //   { headers: { Authorization: `Bearer ${token}` } }
       // );
-      setMessages((prev) => [...prev, message]);
       setNewMessage("");
     } catch (err) {
       console.error("Lỗi khi gửi tin nhắn:", err);
@@ -190,7 +189,7 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
         // if (joinRes.status !== 200) {
         //   throw new Error(`Không thể thêm thành viên ${contactID}`);
         // }
-        socket.emit("addGroupMember",  user.userID ,groupID,()=>{});
+        socket.emit("addGroupMember",  contactID ,groupID,()=>{});
       }
       setSelectedContacts([]);
       setShowAddMemberModal(false);

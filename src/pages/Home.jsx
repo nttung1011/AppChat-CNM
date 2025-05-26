@@ -208,8 +208,25 @@ export default function Home() {
   }, [navigate, refreshAccessToken, fetchChats, fetchGroups]);
 
   useEffect(() => {
-    socket.connect();
-    if (user?.userID) socket.emit("joinUserRoom", user.userID);
+    const token = localStorage.getItem("token");
+    const setUpSocket=async()=>{
+      if(user){
+        socket.connect();
+        socket.emit("joinUserRoom", user.userID);
+        try {
+          const groupsRes = await axios.get(`http://localhost:3000/api/group/${user.userID}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          for(const group of groupsRes.data){
+            socket.emit("joinGroupRoom",group.groupID)
+          }
+        } catch (err) {
+          console.error("Lỗi khi lấy danh sách nhóm:", err);
+          setGroupList([]);
+        }
+      }
+    }
+    setUpSocket()
   }, [user]);
 
   useEffect(() => {
