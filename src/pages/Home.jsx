@@ -208,6 +208,11 @@ export default function Home() {
   }, [navigate, refreshAccessToken, fetchChats, fetchGroups]);
 
   useEffect(() => {
+    socket.connect();
+    if (user?.userID) socket.emit("joinUserRoom", user.userID);
+  }, [user]);
+
+  useEffect(() => {
     socket.on("receiveMessage", async (message) => {
       if (message.groupID && message.groupID !== "NONE") {
         setGroupList((prevGroupList) => {

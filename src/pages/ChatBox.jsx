@@ -18,12 +18,7 @@ export default function ChatBox({ user, partnerID, onBack }) {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    socket.connect();
-
-    socket.on("connect", () => {
-      setConnectionStatus("Đã kết nối");
-      if (user?.userID) socket.emit("joinUserRoom", user.userID);
-    });
+    setConnectionStatus("Đã kết nối");
 
     socket.on("connect_error", (error) => {
       setConnectionStatus(`Lỗi kết nối: ${error.message}`);
@@ -37,7 +32,6 @@ export default function ChatBox({ user, partnerID, onBack }) {
       socket.off("connect");
       socket.off("connect_error");
       socket.off("disconnect");
-      socket.disconnect();
     };
   }, [user]);
 
@@ -176,7 +170,6 @@ export default function ChatBox({ user, partnerID, onBack }) {
           const messageData = {
             senderID: user.userID,
             receiverID: partnerID,
-            groupID: "NONE",
             messageTypeID: getMessageTypeFromFile(file),
             context: newMessage || file.name,
             messageID,
@@ -188,7 +181,6 @@ export default function ChatBox({ user, partnerID, onBack }) {
 
           socket.emit("sendMessage", messageData, (response) => {
             if (response === "Đã nhận") {
-              setMessages((prev) => [...prev, { ...messageData, seenStatus: [] }]);
               setNewMessage("");
               setFile(null);
               fileInputRef.current.value = null;
@@ -215,7 +207,6 @@ export default function ChatBox({ user, partnerID, onBack }) {
       const messageData = {
         senderID: user.userID,
         receiverID: partnerID,
-        groupID: "NONE",
         messageTypeID: "type1",
         context: newMessage,
         messageID,
@@ -227,7 +218,6 @@ export default function ChatBox({ user, partnerID, onBack }) {
 
       socket.emit("sendMessage", messageData, (response) => {
         if (response === "Đã nhận") {
-          setMessages((prev) => [...prev, { ...messageData, seenStatus: [] }]);
           setNewMessage("");
           // Phát sự kiện để cập nhật chatList và conversationsID
           socket.emit("updateChatList", {
