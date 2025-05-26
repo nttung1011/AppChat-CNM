@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import socket from "../socket";
+import socket,{connectSocketWithToken} from "../socket";
 import "../styles/Login.css";
 
 export default function Login() {
@@ -19,8 +19,7 @@ export default function Login() {
         refreshToken,
       });
       localStorage.setItem("token", res.data.accessToken);
-      socket.auth.token = res.data.accessToken;
-      socket.connect();
+      connectSocketWithToken()
       return res.data.accessToken;
     } catch (err) {
       console.error("Failed to refresh token:", err);
@@ -28,7 +27,7 @@ export default function Login() {
     }
   };
 
-  const joinUserGroups = async (userID, token) => {
+  const joinUserGroupRooms = async (userID, token) => {
     try {
       // Gọi API để lấy danh sách nhóm của người dùng
       const groupsRes = await axios.get(`http://localhost:3000/api/group/${userID}`, {
@@ -36,10 +35,10 @@ export default function Login() {
       });
       const groupList = groupsRes.data;
       
-      // Tham gia tất cả các phòng nhóm bằng sự kiện 'joinGroup'
+      // Tham gia tất cả các phòng nhóm bằng sự kiện 'joinGroupRoom'
       groupList.forEach((group) => {
-        socket.emit("joinGroup", userID, group.groupID, (response) => {
-          console.log(`Join group ${group.groupID} response: ${response}`);
+        socket.emit("joinGroupRoom", group.groupID, (response) => {
+          console.log(`Join groupRoom ${group.groupID} response: ${response}`);
         });
       });
     } catch (err) {
@@ -53,49 +52,48 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      // Đăng nhập
       const res = await axios.post("http://localhost:3000/api/auth/login", {
         phoneNumber,
         password,
       });
       const { accessToken, refreshToken, user } = res.data;
-      
+
       // Lưu token
       localStorage.setItem("token", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
-      
-      // Cấu hình socket và kết nối
-      socket.auth.token = accessToken;
-      socket.connect();
-      
-      // Tham gia phòng cá nhân
-      socket.emit("joinUserRoom", user.userID);
-      
-      // Tham gia tất cả các phòng nhóm
-      await joinUserGroups(user.userID, accessToken);
-      
-      // Điều hướng đến trang chủ
+
+      // // Thiết lập và kết nối socket
+      // connectSocketWithToken();
+      // socket.emit("joinUserRoom", user.userID);
+
+      // // Tham gia các phòng nhóm
+      // await joinUserGroupRooms(user.userID, accessToken);
+
+      // Điều hướng
       navigate("/home");
     } catch (err) {
       if (err.response?.status === 401) {
         try {
           const newAccessToken = await refreshToken();
-          // Thử đăng nhập lại
-          const res = await axios.post("http://localhost:3000/api/auth/login", {
-            phoneNumber,
-            password,
-          });
-          const { accessToken, refreshToken, user } = res.data;
-          
-          localStorage.setItem("token", accessToken);
-          localStorage.setItem("refreshToken", refreshToken);
-          socket.auth.token = accessToken;
-          socket.connect();
-          
-          socket.emit("joinUserRoom", user.userID);
-          await joinUserGroups(user.userID, accessToken);
-          
-          navigate("/home");
+          if (newAccessToken) {
+            localStorage.setItem("token", newAccessToken);
+            const res = await axios.post("http://localhost:3000/api/auth/login", {
+              phoneNumber,
+              password,
+            });
+
+            const { accessToken, refreshToken, user } = res.data;
+
+            localStorage.setItem("token", accessToken);
+            localStorage.setItem("refreshToken", refreshToken);
+
+            // connectSocketWithToken();
+            // socket.emit("joinUserRoom", user.userID);
+            // await joinUserGroupRooms(user.userID, accessToken);
+            navigate("/home");
+          } else {
+            setError("Không thể làm mới phiên đăng nhập. Vui lòng thử lại.");
+          }
         } catch (refreshErr) {
           setError("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.");
         }

@@ -35,15 +35,20 @@ export default function ChatBox({ user, partnerID, onBack }) {
     };
   }, [user]);
 
+  const handleReceiveMessageChatBox=(message) => {
+    console.log("Tin nhắn mới nhận được:", message);
+    if(message.groupID!=="NONE")
+      return
+    if ((message.senderID === partnerID && message.receiverID === user.userID) || (message.senderID === user.userID && message.receiverID === partnerID)) {
+      setMessages((prev) => [...prev, message]);
+      socket.emit("seenMessage", message.messageID, user.userID);
+    }
+  }
+
  useEffect(() => {
   console.log("Thiết lập lắng nghe sự kiện Socket.IO cho partnerID:", partnerID);
 
-  socket.on("receiveMessage", (message) => {
-    console.log("Tin nhắn mới nhận được:", message);
-    if (message.senderID === partnerID || message.receiverID === partnerID) {
-      setMessages((prev) => [...prev, message]);
-    }
-  });
+  socket.on("receiveMessage", handleReceiveMessageChatBox);
 
   socket.on("updateSingleChatSeenStatus", (messageID) => {
     console.log("Cập nhật trạng thái seen:", messageID);
@@ -68,7 +73,7 @@ export default function ChatBox({ user, partnerID, onBack }) {
 
   return () => {
     console.log("Dọn dẹp sự kiện Socket.IO");
-    socket.off("receiveMessage");
+    socket.off("receiveMessage",handleReceiveMessageChatBox);
     socket.off("updateSingleChatSeenStatus");
     socket.off("deletedSingleMessage");
     socket.off("recalledSingleMessage");
@@ -341,7 +346,7 @@ export default function ChatBox({ user, partnerID, onBack }) {
             src={
               partner && partner.avatar !== "NONE"
                 ? partner.avatar
-                : "https://via.placeholder.com/40"
+                : "https://picsum.photos/40"
             }
             alt="Partner"
             className="partner-avatar"

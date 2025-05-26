@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import ChatBox from "../pages/ChatBox";
 import GroupChatBox from "../pages/GroupChatBox";
-import socket from "../socket";
+import socket,{connectSocketWithToken} from "../socket";
 import "../styles/Home.css";
 
 export default function Home() {
@@ -55,12 +55,16 @@ export default function Home() {
     },
   ];
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % thumbnails.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [thumbnails.length]);
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     setCurrentSlide((prev) => (prev + 1) % thumbnails.length);
+  //   }, 5000);
+  //   return () => clearInterval(interval);
+  // }, [thumbnails.length]);
+  const truncateText = (text, maxLength = 30) => {
+    if (!text) return "";
+    return text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
+  };
 
   const refreshAccessToken = useCallback(async () => {
     try {
@@ -91,7 +95,25 @@ export default function Home() {
           const lastMessageB = b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
           return lastMessageB - lastMessageA;
         });
-        setChatList(sortedChats);
+        const sortedChatsWithAvatar = await Promise.all(
+          sortedChats.map(async (chat) => {
+            try {
+              const res = await fetch(`http://localhost:3000/api/user/${chat.conversation.userID}`);
+              const data = await res.json();
+              return { 
+                ...chat,
+                conversation:{
+                  ...chat.conversation,
+                  avatar: getAvatarUrl(data.avatar)
+                }
+              };
+            } catch (err) {
+              console.error("Lỗi khi fetch avatar:", err);
+              return { ...chat, avatar: null };
+            }
+          })
+        );
+        setChatList(sortedChatsWithAvatar);
       } else {
         setChatList([]);
       }
@@ -208,10 +230,10 @@ export default function Home() {
   }, [navigate, refreshAccessToken, fetchChats, fetchGroups]);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    let token = localStorage.getItem("token");
     const setUpSocket=async()=>{
       if(user){
-        socket.connect();
+        connectSocketWithToken()
         socket.emit("joinUserRoom", user.userID);
         try {
           const groupsRes = await axios.get(`http://localhost:3000/api/group/${user.userID}`, {
@@ -223,78 +245,101 @@ export default function Home() {
         } catch (err) {
           console.error("Lỗi khi lấy danh sách nhóm:", err);
           setGroupList([]);
+          if (err.response?.status === 401) {
+            token = await refreshAccessToken();
+            if (token) {
+              try {
+                const groupsRes = await axios.get(`http://localhost:3000/api/group/${user.userID}`, {
+                  headers: { Authorization: `Bearer ${token}` },
+                });
+                for(const group of groupsRes.data){
+                  socket.emit("joinGroupRoom",group.groupID)
+                }
+              } catch (retryErr) {
+                console.error("Lỗi khi thử lại:", retryErr);
+                navigate("/");
+              }
+            } else {
+              navigate("/");
+            }
+          } else {
+            navigate("/");
+          }
         }
       }
     }
     setUpSocket()
   }, [user]);
 
-  useEffect(() => {
-    socket.on("receiveMessage", async (message) => {
-      if (message.groupID && message.groupID !== "NONE") {
-        setGroupList((prevGroupList) => {
-          const groupIndex = prevGroupList.findIndex((g) => g.group.groupID === message.groupID);
-          if (groupIndex >= 0) {
-            const updatedGroupList = [...prevGroupList];
-            updatedGroupList[groupIndex].messages.push(message);
+  const handleReceiveMessageHome=async (message) => {
+    if (message.groupID && message.groupID !== "NONE") {
+      setGroupList((prevGroupList) => {
+        const groupIndex = prevGroupList.findIndex((g) => g.group.groupID === message.groupID);
+        if (groupIndex >= 0) {
+          const updatedGroupList = [...prevGroupList];
+          updatedGroupList[groupIndex].messages.push(message);
+          return [
+            updatedGroupList[groupIndex],
+            ...updatedGroupList.slice(0, groupIndex),
+            ...updatedGroupList.slice(groupIndex + 1),
+          ].sort((a, b) => {
+            const lastMessageA = a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
+            const lastMessageB = b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
+            return lastMessageB - lastMessageA;
+          });
+        }
+        return prevGroupList;
+      });
+    } else {
+      const token = localStorage.getItem("token");
+      try {
+        const partnerID=message.senderID===user.userID?message.receiverID:message.senderID
+        const partnerRes = await axios.get(`http://localhost:3000/api/user/${partnerID}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const partner = partnerRes.data;
+
+        setChatList((prevChatList) => {
+          const existingChatIndex = prevChatList.findIndex(
+            (chat) => chat.conversation.userID === partnerID
+          );
+
+          if (existingChatIndex >= 0) {
+            const updatedChatList = [...prevChatList];
+            updatedChatList[existingChatIndex].messages.push(message);
             return [
-              updatedGroupList[groupIndex],
-              ...updatedGroupList.slice(0, groupIndex),
-              ...updatedGroupList.slice(groupIndex + 1),
+              updatedChatList[existingChatIndex],
+              ...updatedChatList.slice(0, existingChatIndex),
+              ...updatedChatList.slice(existingChatIndex + 1),
             ].sort((a, b) => {
               const lastMessageA = a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
               const lastMessageB = b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
               return lastMessageB - lastMessageA;
             });
+          } else {
+            const newChat = {
+              conversation: {
+                userID: partnerID,
+                username: partner.username,
+                avatar: partner.avatar || "NONE",
+              },
+              messages: [message],
+            };
+            return [newChat, ...prevChatList].sort((a, b) => {
+              const lastMessageA = a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
+              const lastMessageB = b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
+              return lastMessageB - lastMessageA;
+            });
           }
-          return prevGroupList;
         });
-      } else {
-        const token = localStorage.getItem("token");
-        try {
-          const senderRes = await axios.get(`http://localhost:3000/api/user/${message.senderID}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const sender = senderRes.data;
-
-          setChatList((prevChatList) => {
-            const existingChatIndex = prevChatList.findIndex(
-              (chat) => chat.conversation.userID === message.senderID
-            );
-
-            if (existingChatIndex >= 0) {
-              const updatedChatList = [...prevChatList];
-              updatedChatList[existingChatIndex].messages.push(message);
-              return [
-                updatedChatList[existingChatIndex],
-                ...updatedChatList.slice(0, existingChatIndex),
-                ...updatedChatList.slice(existingChatIndex + 1),
-              ].sort((a, b) => {
-                const lastMessageA = a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
-                const lastMessageB = b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
-                return lastMessageB - lastMessageA;
-              });
-            } else {
-              const newChat = {
-                conversation: {
-                  userID: message.senderID,
-                  username: sender.username,
-                  avatar: sender.avatar || "NONE",
-                },
-                messages: [message],
-              };
-              return [newChat, ...prevChatList].sort((a, b) => {
-                const lastMessageA = a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
-                const lastMessageB = b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
-                return lastMessageB - lastMessageA;
-              });
-            }
-          });
-        } catch (err) {
-          console.error("Lỗi khi lấy thông tin người gửi:", err);
-        }
+      } catch (err) {
+        console.error("Lỗi khi lấy thông tin người gửi:", err);
       }
-    });
+    }
+  }
+
+  useEffect(() => {
+    socket.on("receiveMessage", handleReceiveMessageHome);
 
     socket.on("updateChatList", (data) => {
       if (data.userID === user?.userID) {
@@ -359,7 +404,7 @@ export default function Home() {
     });
 
     return () => {
-      socket.off("receiveMessage");
+      socket.off("receiveMessage",handleReceiveMessageHome);
       socket.off("updateChatList");
       socket.off("groupCreated");
       socket.off("groupRenamed");
@@ -512,7 +557,7 @@ export default function Home() {
   };
 
   const getAvatarUrl = (avatar) => {
-    return avatar && avatar !== "NONE" ? avatar : "https://via.placeholder.com/40";
+    return avatar && avatar !== "NONE" ? avatar : "https://picsum.photos/40";
   };
 
   const handleSelectChat = (partnerID, contact = null) => {
@@ -585,9 +630,11 @@ export default function Home() {
       ? lastMessage.context.substring(0, 50) + "..."
       : lastMessage.context;
     if (lastMessage.senderID === user?.userID) {
-      return `Bạn: ${messageText}`;
+      return (
+      <p>Bạn: {truncateText(messageText)}</p>
+      );
     } else {
-      return `${chat.conversation.username}: ${messageText}`;
+      return `${chat.conversation.username}: ${truncateText(messageText)}`;
     }
   };
 
@@ -633,10 +680,16 @@ export default function Home() {
   return (
     <div className="home-container">
       <div className="left-sidebar">
-        <div className="user-avatar-wrapper">
-          <div className="user-avatar" onClick={toggleDropdown}>
-            <img src={getAvatarUrl(user?.avatar)} alt="User" />
-          </div>
+          <img src={getAvatarUrl(user?.avatar)} 
+          onClick={toggleDropdown}
+          style={{
+            objectFit:'cover',
+            width:40,
+            height:40,
+            borderRadius: "99999px",
+            cursor: "pointer"
+          }}
+          alt="User" />
           {showDropdown && (
             <div className="user-dropdown">
               <div className="dropdown-username">{user?.username || "Người dùng"}</div>
@@ -655,7 +708,6 @@ export default function Home() {
               </div>
             </div>
           )}
-        </div>
         <div className="sidebar-icons">
           <div
             className={`sidebar-icon ${activeTab === "all" ? "active" : ""}`}
@@ -725,12 +777,16 @@ export default function Home() {
                     className={`chat-item ${selectedChat === chat.conversation.userID ? "active" : ""}`}
                     onClick={() => handleSelectChat(chat.conversation.userID)}
                   >
-                    <div className="chat-avatar">
-                      <img
-                        src={getAvatarUrl(chat.conversation.avatar)}
-                        alt={chat.conversation.username}
-                      />
-                    </div>
+                    <img
+                      className="chat-avatar"
+                      src={chat.conversation.avatar}
+                      alt={chat.conversation.username}
+                      style={{
+                        minWidth:50,
+                        height:50,
+                        objectFit:'cover'
+                      }}
+                    />
                     <div className="chat-info">
                       <div className="chat-name">{chat.conversation.username}</div>
                       <div className="chat-last-message">

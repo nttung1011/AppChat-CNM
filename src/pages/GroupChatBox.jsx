@@ -313,7 +313,7 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
   };
 
   const getAvatarUrl = (avatar) => {
-    return avatar && avatar !== "NONE" ? avatar : "https://via.placeholder.com/40";
+    return avatar && avatar !== "NONE" ? avatar : "https://picsum.photos/40";
   };
 
   const isLeader = members.find((m) => m.userID === user.userID)?.memberRole === "LEADER";

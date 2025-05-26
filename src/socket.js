@@ -1,25 +1,29 @@
 // src/socket.js
 import { io } from "socket.io-client";
 
-// Khởi tạo socket với cổng 3000
+// Khởi tạo socket, KHÔNG truyền token ngay lập tức
 const socket = io("http://localhost:3000", {
-    autoConnect: false,
-    auth: {
-        token: localStorage.getItem("token") || "",
-    },
+  autoConnect: false,
 });
 
-// Ghi log chi tiết các sự kiện kết nối
+// Đăng ký log sự kiện
 socket.on("connect", () => {
-    console.log("Socket kết nối thành công");
+  console.log("✅ Socket kết nối thành công");
 });
 
 socket.on("connect_error", (error) => {
-    console.error("Socket connection error:", error.message);
+  console.error("❌ Socket connection error:", error.message);
 });
 
 socket.on("disconnect", (reason) => {
-    console.log("Socket disconnected:", reason);
+  console.log("⚠️ Socket disconnected:", reason);
 });
+
+// gọi socket.connect với token mới nhất
+export const connectSocketWithToken = () => {
+  const token = localStorage.getItem("token");
+  socket.auth = { token };
+  socket.connect();
+};
 
 export default socket;
