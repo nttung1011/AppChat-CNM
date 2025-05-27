@@ -268,7 +268,7 @@ export default function Home() {
         }
       }
     }
-    setUpSocket()
+    // setUpSocket()
   }, [user]);
 
   const handleReceiveMessageHome=async (message) => {
