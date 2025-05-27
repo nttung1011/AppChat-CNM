@@ -19,6 +19,7 @@ body {
 /* Thanh tác vụ bên trái */
 
 .left-sidebar {
+    min-width: 54px;
     width: 54px;
     background-color: #0088ff !important;
     display: flex;
@@ -148,6 +149,7 @@ body {
 /* Danh sách chat */
 
 .chat-list-container {
+    min-width: 360px;
     width: 360px;
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
     border-right: 1px solid #e6e6e6;

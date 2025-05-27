@@ -92,6 +92,8 @@ export default function Login() {
 
       localStorage.setItem("token", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
+      socket.emit("joinUserRoom", user.userID);
+      await joinUserGroupRooms(user.userID, accessToken);
       navigate("/home");
     } catch (err) {
       if (err.response?.status === 401) {
@@ -135,9 +137,11 @@ export default function Login() {
     
 
     // Nhận user,tokens từ app
-    socket.on("qr-authenticated", ({ accessToken, refreshToken, user }) => {
+    socket.on("qr-authenticated", async({ accessToken, refreshToken, user }) => {
       localStorage.setItem("token", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
+      socket.emit("joinUserRoom", user.userID);
+      await joinUserGroupRooms(user.userID, accessToken);
       navigate("/home")
     });
 

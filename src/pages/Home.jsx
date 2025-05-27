@@ -641,14 +641,11 @@ export default function Home() {
   const getGroupLastMessageInfo = (group) => {
     if (!group.messages || group.messages.length === 0) return "Chưa có tin nhắn";
     const lastMessage = group.messages[group.messages.length - 1];
-    const messageText = lastMessage.context.length > 50
-      ? lastMessage.context.substring(0, 50) + "..."
-      : lastMessage.context;
     if (lastMessage.senderID === user?.userID) {
-      return `Bạn: ${messageText}`;
+      return `Bạn: ${truncateText(lastMessage.context)}`;
     } else {
       const sender = group.members.find((m) => m.userID === lastMessage.senderID);
-      return `${sender?.username || "Thành viên"}: ${messageText}`;
+      return `${sender?.username || "Thành viên"}: ${truncateText(lastMessage.context)}`;
     }
   };
 

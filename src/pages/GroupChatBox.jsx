@@ -36,6 +36,11 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMessages(messagesRes.data);
+      messagesRes.data.forEach((msg) => {
+          if (!msg.seenStatus.includes(user.userID) && msg.senderID !== user.userID) {
+            socket.emit("seenMessage", msg.messageID, user.userID);
+          }
+        });
     } catch (err) {
       console.error("Lỗi khi lấy thông tin nhóm:", err);
       if (err.response?.status === 404) {
@@ -76,6 +81,9 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
     socket.on("receiveMessage", (message) => {
       if (message.groupID === groupID) {
         setMessages((prev) => [...prev, message]);
+        if (message.senderID !== user.userID) {
+          socket.emit("seenMessage", message.messageID, user.userID);
+        }
       }
     });
 
