@@ -25,7 +25,7 @@ const QRTab = ({ sessionID }) => {
       </p>
       {sessionID && (
         <QRCodeCanvas
-          value={JSON.stringify({ sessionID })}
+          value={sessionID}
           size={300}
           style={{ border: "8px solid #fff", borderRadius: "10px" }}
         />

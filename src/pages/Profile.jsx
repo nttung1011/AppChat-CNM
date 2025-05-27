@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import "../styles/Profile.css";
+import {QRCodeCanvas} from 'qrcode.react'
 
 export default function Profile() {
   const [user, setUser] = useState(null);
@@ -316,7 +317,13 @@ export default function Profile() {
           {avatarError && <p className="error-message">{avatarError}</p>}
           {avatarSuccess && <p className="success-message">{avatarSuccess}</p>}
         </div>
-        <div className="profile-form">
+        <div className="profile-form"
+          style={{
+            display:'flex',
+            flexDirection:'column',
+            alignItems:'center'
+          }}
+        >
           <div className="form-group">
             <label htmlFor="username">Tên</label>
             <input
@@ -362,6 +369,19 @@ export default function Profile() {
                 readOnly
               />
             )}
+          </div>
+          <div className="form-group">
+            <label htmlFor="DOB">QR của tôi</label>
+            <div style={{
+              display:'flex',
+              justifyContent:'center'
+            }}>
+              <QRCodeCanvas
+                value={user.userID}
+                size={200}
+                style={{ border: "8px solid #fff", borderRadius: "10px" }}
+              />
+            </div>          
           </div>
         </div>
       </div>
