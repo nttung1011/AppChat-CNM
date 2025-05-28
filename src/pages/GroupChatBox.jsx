@@ -85,7 +85,7 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
     } catch (err) {
       console.error('Lỗi khi lấy danh bạ:', err);
     }
-  }, [user.userID]);
+  }, [user.userID, showAddMemberModal]);
 
   useEffect(() => {
     fetchGroupInfo();
@@ -148,6 +148,7 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
     // });
 
     socket.on('newMember', userID => {
+      console.log('New member joined:', userID);
       if (userID === user.userID) {
         fetchGroups(localStorage.getItem('token'), user.userID);
       } else {
@@ -155,10 +156,11 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
       }
     });
 
-    socket.on('memberLeft', ({ groupID: updatedGroupID, userID: leftUserID }) => {
-      if (updatedGroupID === groupID) {
+    socket.on('memberLeft', (updatedGroupID, leftUserID) => {
+      console.log('Member left:', { updatedGroupID, leftUserID });
+      if (updatedGroupID === groupID && leftUserID !== user.userID) {
         fetchGroupInfo();
-        fetchGroups(localStorage.getItem('token'), user.userID);
+        return;
       }
     });
 
@@ -203,7 +205,7 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
       socket.off('forceLeaveGroup');
       socket.off('newMember');
     };
-  }, [groupID, onBack, user.userID, fetchGroups, onBack]);
+  }, [groupID, onBack, user.userID, fetchGroups]);
 
   //scroll to bottom
   useEffect(() => {
@@ -327,10 +329,11 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
       //   { userID: user.userID, groupID },
       //   { headers: { Authorization: `Bearer ${token}` } }
       // );
-      socket.emit('leaveGroup', user.userID, groupID, () => {});
-      alert('Rời nhóm thành công!');
-      await fetchGroups(token, user.userID);
-      onBack();
+      socket.emit('leaveGroup', user.userID, groupID, res => {
+        console.log(res);
+        alert(res);
+        fetchGroups(token, user.userID).then(() => onBack());
+      });
     } catch (err) {
       console.error('Lỗi khi rời nhóm:', err);
       alert(`Lỗi khi rời nhóm: ${err.response?.data?.message || err.message}`);

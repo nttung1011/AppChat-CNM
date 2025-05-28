@@ -446,6 +446,25 @@ export default function Home() {
       fetchGroups(localStorage.getItem('token'), user.userID);
     });
 
+    socket.on('newMember', userID => {
+      console.log('New member joined:', userID);
+      if (userID === user.userID) {
+        fetchGroups(localStorage.getItem('token'), user.userID);
+      }
+    });
+
+    socket.on('forceLeaveGroup', (leavingUserID, updatedGroupID) => {
+      if (leavingUserID == user.userID) {
+        fetchGroups(localStorage.getItem('token'), user.userID)
+          .then(() => handleBackToChatList())
+          .catch(err => {
+            console.error('Lỗi khi cập nhật danh sách nhóm sau khi bị buộc rời:', err);
+            handleBackToChatList();
+          });
+        return;
+      }
+    });
+
     return () => {
       socket.off('receiveMessage', handleReceiveMessageHome);
       socket.off('updateChatList');
@@ -455,6 +474,8 @@ export default function Home() {
       socket.off('memberKicked');
       socket.off('memberLeft');
       socket.off('leaderSwitched');
+      socket.off('newMember');
+      socket.off('forceLeaveGroup');
     };
   }, [user, fetchGroups]);
 
