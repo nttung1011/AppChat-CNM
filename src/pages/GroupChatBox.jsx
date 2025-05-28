@@ -104,18 +104,6 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
       }
     });
 
-    socket.on('groupDeleted', deletedGroupID => {
-      if (deletedGroupID === groupID) {
-        alert('Nhóm đã bị xóa!');
-        fetchGroups(localStorage.getItem('token'), user.userID)
-          .then(() => onBack())
-          .catch(err => {
-            console.error('Lỗi khi cập nhật danh sách nhóm sau khi xóa:', err);
-            onBack();
-          });
-      }
-    });
-
     socket.on('groupRenamed', ({ groupID: renamedGroupID, newGroupName }) => {
       if (renamedGroupID === groupID) {
         setGroup(prev => ({ ...prev, groupName: newGroupName }));
@@ -129,23 +117,6 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
         fetchGroups(localStorage.getItem('token'), user.userID);
       }
     });
-
-    // socket.on('memberKicked', ({ groupID: updatedGroupID, userID: kickedUserID }) => {
-    //   if (updatedGroupID === groupID) {
-    //     if (kickedUserID === user.userID) {
-    //       alert('Bạn đã bị xóa khỏi nhóm!');
-    //       fetchGroups(localStorage.getItem('token'), user.userID)
-    //         .then(() => onBack())
-    //         .catch(err => {
-    //           console.error('Lỗi khi cập nhật danh sách nhóm sau khi bị kick:', err);
-    //           onBack();
-    //         });
-    //     } else {
-    //       fetchGroupInfo();
-    //       fetchGroups(localStorage.getItem('token'), user.userID);
-    //     }
-    //   }
-    // });
 
     socket.on('newMember', userID => {
       console.log('New member joined:', userID);
@@ -184,10 +155,19 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
             console.error('Lỗi khi cập nhật danh sách nhóm sau khi bị buộc rời:', err);
             onBack();
           });
+        socket.off('forceLeaveGroup');
         return;
       }
       if (updatedGroupID === groupID) {
         fetchGroupInfo();
+      }
+    });
+
+    socket.on('groupDeleted', deletedGroupID => {
+      console.log('Group deleted:', deletedGroupID);
+      fetchGroups(localStorage.getItem('token'), user.userID);
+      if (deletedGroupID === groupID) {
+        onBack();
       }
     });
 
@@ -284,6 +264,7 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
       //   { userID: selectedMemberToKick.userID, groupID },
       //   { headers: { Authorization: `Bearer ${token}` } }
       // );
+
       socket.emit('kickMember', user.userID, selectedMemberToKick.userID, groupID, res => {
         console.log(res);
         alert(res);
@@ -358,7 +339,6 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
       socket.emit('deleteGroup', user.userID, groupID, res => {
         console.log(res);
         alert(res);
-        fetchGroups(token, user.userID).then(() => onBack());
       });
     } catch (err) {
       console.error('Lỗi khi xóa nhóm:', err.response?.data || err.message);

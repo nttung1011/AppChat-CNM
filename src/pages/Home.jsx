@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, use } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
@@ -86,6 +86,12 @@ export default function Home() {
       return null;
     }
   }, [navigate]);
+
+  useEffect(() => {
+    if (selectedGroup) {
+      socket.emit('joinGroupRoom', selectedGroup);
+    }
+  }, [selectedGroup]);
 
   const fetchChats = useCallback(async (token, userID) => {
     try {
@@ -302,7 +308,7 @@ export default function Home() {
       }
     };
     setUpSocket();
-  }, [user]);
+  }, [user, refreshAccessToken]);
 
   const handleReceiveMessageHome = async message => {
     if (message.groupID && message.groupID !== 'NONE') {
@@ -454,14 +460,31 @@ export default function Home() {
     });
 
     socket.on('forceLeaveGroup', (leavingUserID, updatedGroupID) => {
+      console.log('User forced to leave group:', leavingUserID, updatedGroupID);
       if (leavingUserID == user.userID) {
-        fetchGroups(localStorage.getItem('token'), user.userID)
-          .then(() => handleBackToChatList())
-          .catch(err => {
-            console.error('Lỗi khi cập nhật danh sách nhóm sau khi bị buộc rời:', err);
-            handleBackToChatList();
-          });
-        return;
+        fetchGroups(localStorage.getItem('token'), user.userID);
+      }
+      if (selectedGroup === updatedGroupID) {
+        setSelectedGroup(null);
+        setSelectedChat(null);
+      }
+    });
+
+    socket.on('memberLeft', (updatedGroupID, leftUserID) => {
+      console.log('Member left:', { updatedGroupID, leftUserID });
+      if (leftUserID === user.userID) {
+        fetchGroups(localStorage.getItem('token'), user.userID);
+        setSelectedGroup(null);
+        setSelectedChat(null);
+      }
+    });
+
+    socket.on('groupDeleted', deletedGroupID => {
+      console.log('Group deleted:', deletedGroupID);
+      fetchGroups(localStorage.getItem('token'), user.userID);
+      if (selectedGroup === deletedGroupID) {
+        setSelectedGroup(null);
+        setSelectedChat(null);
       }
     });
 
@@ -476,6 +499,8 @@ export default function Home() {
       socket.off('leaderSwitched');
       socket.off('newMember');
       socket.off('forceLeaveGroup');
+      socket.off('memberLeft');
+      socket.off('groupDeleted');
     };
   }, [user, fetchGroups]);
 
