@@ -1,27 +1,40 @@
-import { useEffect, useState, useCallback } from "react";
-import axios from "axios";
-import socket from "../socket";
-import "../styles/GroupChatBox.css";
+import { useEffect, useState, useCallback, useRef } from 'react';
+import axios from 'axios';
+import socket, { connectSocketWithToken } from '../socket';
+import '../styles/GroupChatBox.css';
+import ShareIcon from '@mui/icons-material/Share';
+import ReplyIcon from '@mui/icons-material/Reply';
+import RestoreIcon from '@mui/icons-material/Restore';
+import ShareMessageModal from '../components/ShareMessageModal';
+import { Box, Typography, IconButton } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import GroupMembers from '../components/GroupMembers';
+import KickMemberModal from '../components/KickMemberModal';
 
 export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
   const [group, setGroup] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
+  const [newMessage, setNewMessage] = useState('');
   const [showGroupOptions, setShowGroupOptions] = useState(false);
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [showKickMemberModal, setShowKickMemberModal] = useState(false);
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [showSwitchLeaderModal, setShowSwitchLeaderModal] = useState(false);
-  const [newGroupName, setNewGroupName] = useState("");
+  const [newGroupName, setNewGroupName] = useState('');
   const [contacts, setContacts] = useState([]);
   const [members, setMembers] = useState([]);
   const [selectedContacts, setSelectedContacts] = useState([]);
-  const [selectedMemberToKick, setSelectedMemberToKick] = useState(null);
+  // const [selectedMemberToKick, setSelectedMemberToKick] = useState(null);
   const [selectedMemberToLead, setSelectedMemberToLead] = useState(null);
+  const [showShareMessageModal, setShowShareMessageModal] = useState(false);
+  const [selectedMessageToShare, setSelectedMessageToShare] = useState(null);
+  const [replyMessage, setReplyMessage] = useState(null);
+  const [showGroupMembers, setShowGroupMembers] = useState(false);
+  const messageBoxRef = useRef(null);
 
   const fetchGroupInfo = useCallback(async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
       const groupRes = await axios.get(`http://localhost:3000/api/group/${groupID}/info`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -36,16 +49,16 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMessages(messagesRes.data);
-      messagesRes.data.forEach((msg) => {
-          if (!msg.seenStatus.includes(user.userID) && msg.senderID !== user.userID) {
-            socket.emit("seenMessage", msg.messageID, user.userID);
-          }
-        });
+      messagesRes.data.forEach(msg => {
+        if (!msg.seenStatus.includes(user.userID) && msg.senderID !== user.userID) {
+          socket.emit('seenMessage', msg.messageID, user.userID);
+        }
+      });
     } catch (err) {
-      console.error("Lỗi khi lấy thông tin nhóm:", err);
+      console.error('Lỗi khi lấy thông tin nhóm:', err);
       if (err.response?.status === 404) {
-        alert("Nhóm không tồn tại hoặc đã bị xóa!");
-        const token = localStorage.getItem("token"); // Khai báo token
+        alert('Nhóm không tồn tại hoặc đã bị xóa!');
+        const token = localStorage.getItem('token'); // Khai báo token
         fetchGroups(token, user.userID).then(() => onBack());
       }
     }
@@ -53,12 +66,15 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
 
   const fetchContacts = useCallback(async () => {
     try {
-      const token = localStorage.getItem("token");
-      const contactsRes = await axios.get(`http://localhost:3000/api/user/${user.userID}/contacts`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const token = localStorage.getItem('token');
+      const contactsRes = await axios.get(
+        `http://localhost:3000/api/user/${user.userID}/contacts`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       const contactsData = await Promise.all(
-        contactsRes.data.map(async (contact) => {
+        contactsRes.data.map(async contact => {
           const contactRes = await axios.get(`http://localhost:3000/api/user/${contact.userID}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
@@ -67,7 +83,7 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
       );
       setContacts(contactsData);
     } catch (err) {
-      console.error("Lỗi khi lấy danh bạ:", err);
+      console.error('Lỗi khi lấy danh bạ:', err);
     }
   }, [user.userID]);
 
@@ -78,90 +94,137 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
   }, [fetchGroupInfo, fetchContacts, user.userID, groupID]);
 
   useEffect(() => {
-    socket.on("receiveMessage", (message) => {
+    socket.on('receiveMessage', message => {
+      console.log('received message');
       if (message.groupID === groupID) {
-        setMessages((prev) => [...prev, message]);
+        setMessages(prev => [...prev, message]);
         if (message.senderID !== user.userID) {
-          socket.emit("seenMessage", message.messageID, user.userID);
+          socket.emit('seenMessage', message.messageID, user.userID);
         }
       }
     });
 
-    socket.on("groupDeleted", (deletedGroupID) => {
+    socket.on('groupDeleted', deletedGroupID => {
       if (deletedGroupID === groupID) {
-        alert("Nhóm đã bị xóa!");
-        fetchGroups(localStorage.getItem("token"), user.userID)
+        alert('Nhóm đã bị xóa!');
+        fetchGroups(localStorage.getItem('token'), user.userID)
           .then(() => onBack())
-          .catch((err) => {
-            console.error("Lỗi khi cập nhật danh sách nhóm sau khi xóa:", err);
+          .catch(err => {
+            console.error('Lỗi khi cập nhật danh sách nhóm sau khi xóa:', err);
             onBack();
           });
       }
     });
 
-    socket.on("groupRenamed", ({ groupID: renamedGroupID, newGroupName }) => {
+    socket.on('groupRenamed', ({ groupID: renamedGroupID, newGroupName }) => {
       if (renamedGroupID === groupID) {
-        setGroup((prev) => ({ ...prev, groupName: newGroupName }));
-        fetchGroups(localStorage.getItem("token"), user.userID);
+        setGroup(prev => ({ ...prev, groupName: newGroupName }));
+        fetchGroups(localStorage.getItem('token'), user.userID);
       }
     });
 
-    socket.on("memberAdded", ({ groupID: updatedGroupID }) => {
+    socket.on('memberAdded', ({ groupID: updatedGroupID }) => {
       if (updatedGroupID === groupID) {
         fetchGroupInfo();
-        fetchGroups(localStorage.getItem("token"), user.userID);
+        fetchGroups(localStorage.getItem('token'), user.userID);
       }
     });
 
-    socket.on("memberKicked", ({ groupID: updatedGroupID, userID: kickedUserID }) => {
-      if (updatedGroupID === groupID) {
-        if (kickedUserID === user.userID) {
-          alert("Bạn đã bị xóa khỏi nhóm!");
-          fetchGroups(localStorage.getItem("token"), user.userID)
-            .then(() => onBack())
-            .catch((err) => {
-              console.error("Lỗi khi cập nhật danh sách nhóm sau khi bị kick:", err);
-              onBack();
-            });
-        } else {
-          fetchGroupInfo();
-          fetchGroups(localStorage.getItem("token"), user.userID);
-        }
+    // socket.on('memberKicked', ({ groupID: updatedGroupID, userID: kickedUserID }) => {
+    //   if (updatedGroupID === groupID) {
+    //     if (kickedUserID === user.userID) {
+    //       alert('Bạn đã bị xóa khỏi nhóm!');
+    //       fetchGroups(localStorage.getItem('token'), user.userID)
+    //         .then(() => onBack())
+    //         .catch(err => {
+    //           console.error('Lỗi khi cập nhật danh sách nhóm sau khi bị kick:', err);
+    //           onBack();
+    //         });
+    //     } else {
+    //       fetchGroupInfo();
+    //       fetchGroups(localStorage.getItem('token'), user.userID);
+    //     }
+    //   }
+    // });
+
+    socket.on('newMember', userID => {
+      if (userID === user.userID) {
+        fetchGroups(localStorage.getItem('token'), user.userID);
+      } else {
+        fetchGroupInfo();
       }
     });
 
-    socket.on("memberLeft", ({ groupID: updatedGroupID, userID: leftUserID }) => {
+    socket.on('memberLeft', ({ groupID: updatedGroupID, userID: leftUserID }) => {
       if (updatedGroupID === groupID) {
         fetchGroupInfo();
-        fetchGroups(localStorage.getItem("token"), user.userID);
+        fetchGroups(localStorage.getItem('token'), user.userID);
       }
     });
 
-    socket.on("leaderSwitched", ({ groupID: updatedGroupID }) => {
+    socket.on('leaderSwitched', ({ groupID: updatedGroupID }) => {
       if (updatedGroupID === groupID) {
         fetchGroupInfo();
-        fetchGroups(localStorage.getItem("token"), user.userID);
+        fetchGroups(localStorage.getItem('token'), user.userID);
       }
     });
+
+    socket.on('recalledGroupMessage', messageID => {
+      setMessages(prev => prev.filter(msg => msg.messageID !== messageID));
+    });
+
+    socket.on('forceLeaveGroup', (leavingUserID, updatedGroupID) => {
+      if (updatedGroupID == groupID && leavingUserID == user.userID) {
+        alert('Bạn đã bị buộc rời khỏi nhóm!');
+        fetchGroups(localStorage.getItem('token'), user.userID)
+          .then(() => onBack())
+          .catch(err => {
+            console.error('Lỗi khi cập nhật danh sách nhóm sau khi bị buộc rời:', err);
+            onBack();
+          });
+        return;
+      }
+      if (updatedGroupID === groupID) {
+        fetchGroupInfo();
+      }
+    });
+
+    // connectSocketWithToken();
 
     return () => {
-      socket.off("receiveMessage");
-      socket.off("groupDeleted");
-      socket.off("groupRenamed");
-      socket.off("memberAdded");
-      socket.off("memberKicked");
-      socket.off("memberLeft");
-      socket.off("leaderSwitched");
+      socket.off('receiveMessage');
+      socket.off('groupDeleted');
+      socket.off('groupRenamed');
+      socket.off('memberAdded');
+      socket.off('memberKicked');
+      socket.off('memberLeft');
+      socket.off('leaderSwitched');
+      socket.off('recalledGroupMessage');
+      socket.off('forceLeaveGroup');
+      socket.off('newMember');
     };
-  }, [groupID, onBack, user.userID, fetchGroups,onBack]);
+  }, [groupID, onBack, user.userID, fetchGroups, onBack]);
 
-  const handleSendMessage = async (e) => {
+  //scroll to bottom
+  useEffect(() => {
+    if (messageBoxRef.current) {
+      messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const handleSendMessage = async e => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
+    if (replyMessage) {
+      console.log('Replying to message comming soon', replyMessage);
+      //reset
+      setReplyMessage(null);
+    }
+
     try {
-      const token = localStorage.getItem("token");
-      const messageTypeID = "type1"; // Text message
+      const token = localStorage.getItem('token');
+      const messageTypeID = 'type1'; // Text message
       const messageID = `msg-${Date.now()}`;
       const message = {
         messageID,
@@ -173,21 +236,21 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
         createdAt: new Date().toISOString(),
       };
 
-      socket.emit("sendMessage", message);
+      socket.emit('sendMessage', message);
       // await axios.post(
       //   "http://localhost:3000/api/message",
       //   { ...message, receiverID: "NONE" },
       //   { headers: { Authorization: `Bearer ${token}` } }
       // );
-      setNewMessage("");
+      setNewMessage('');
     } catch (err) {
-      console.error("Lỗi khi gửi tin nhắn:", err);
+      console.error('Lỗi khi gửi tin nhắn:', err);
     }
   };
 
   const handleAddMembers = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
       for (const contactID of selectedContacts) {
         // const joinRes = await axios.put(
         //   "http://localhost:3000/api/group/join",
@@ -197,134 +260,166 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
         // if (joinRes.status !== 200) {
         //   throw new Error(`Không thể thêm thành viên ${contactID}`);
         // }
-        socket.emit("addGroupMember",  contactID ,groupID,()=>{});
+        socket.emit('addGroupMember', contactID, groupID, res => {
+          console.log(res);
+        });
       }
       setSelectedContacts([]);
       setShowAddMemberModal(false);
       fetchGroupInfo();
       fetchGroups(token, user.userID);
-      alert("Thêm thành viên thành công!");
     } catch (err) {
-      console.error("Lỗi khi thêm thành viên:", err);
+      console.error('Lỗi khi thêm thành viên:', err);
       alert(`Lỗi khi thêm thành viên: ${err.message}`);
     }
   };
 
-  const handleKickMember = async () => {
+  const handleKickMember = async selectedMemberToKick => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
       // await axios.put(
       //   `http://localhost:3000/api/group/kick`,
       //   { userID: selectedMemberToKick.userID, groupID },
       //   { headers: { Authorization: `Bearer ${token}` } }
       // );
-      socket.emit("kickMember",user.userID, selectedMemberToKick, groupID, ()=>{
-        console.log("kick thanh cong");
-        
+      socket.emit('kickMember', user.userID, selectedMemberToKick.userID, groupID, res => {
+        console.log(res);
+        alert(res);
       });
       setShowKickMemberModal(false);
-      setSelectedMemberToKick(null);
       fetchGroupInfo();
       fetchGroups(token, user.userID);
-      alert("Xóa thành viên thành công!");
     } catch (err) {
-      console.error("Lỗi khi xóa thành viên:", err);
-      alert("Lỗi khi xóa thành viên!");
+      console.error('Lỗi khi xóa thành viên:', err);
+      alert('Lỗi khi xóa thành viên!');
     }
   };
 
   const handleRenameGroup = async () => {
     if (!newGroupName.trim()) {
-      alert("Tên nhóm không được để trống!");
+      alert('Tên nhóm không được để trống!');
       return;
     }
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
       // await axios.put(
       //   `http://localhost:3000/api/group/rename`,
       //   { groupID, newGroupName },
       //   { headers: { Authorization: `Bearer ${token}` } }
       // );
-      socket.emit("renameGroup", groupID, newGroupName,()=>{});
+      socket.emit('renameGroup', groupID, newGroupName, () => {});
       setShowRenameModal(false);
-      setNewGroupName("");
+      setNewGroupName('');
       fetchGroupInfo();
       fetchGroups(token, user.userID);
-      alert("Đổi tên nhóm thành công!");
+      alert('Đổi tên nhóm thành công!');
     } catch (err) {
-      console.error("Lỗi khi đổi tên nhóm:", err);
-      alert("Lỗi khi đổi tên nhóm!");
+      console.error('Lỗi khi đổi tên nhóm:', err);
+      alert('Lỗi khi đổi tên nhóm!');
     }
   };
 
   const handleLeaveGroup = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
       // await axios.put(
       //   `http://localhost:3000/api/group/leave`,
       //   { userID: user.userID, groupID },
       //   { headers: { Authorization: `Bearer ${token}` } }
       // );
-      socket.emit("leaveGroup",user.userID, groupID,()=>{});
-      alert("Rời nhóm thành công!");
+      socket.emit('leaveGroup', user.userID, groupID, () => {});
+      alert('Rời nhóm thành công!');
       await fetchGroups(token, user.userID);
       onBack();
     } catch (err) {
-      console.error("Lỗi khi rời nhóm:", err);
+      console.error('Lỗi khi rời nhóm:', err);
       alert(`Lỗi khi rời nhóm: ${err.response?.data?.message || err.message}`);
     }
   };
 
- const handleDeleteGroup = async () => {
-  const isLeader = members.find((m) => m.userID === user.userID)?.memberRole === "LEADER";
-  if (!isLeader) {
-    alert("Chỉ Leader mới có quyền xóa nhóm!");
-    return;
-  }
+  const handleDeleteGroup = async () => {
+    const isLeader = members.find(m => m.userID === user.userID)?.memberRole === 'LEADER';
+    if (!isLeader) {
+      alert('Chỉ Leader mới có quyền xóa nhóm!');
+      return;
+    }
 
-  const confirmDelete = window.confirm("Bạn có chắc chắn muốn xóa nhóm này không?");
-  if (!confirmDelete) return;
+    const confirmDelete = window.confirm('Bạn có chắc chắn muốn xóa nhóm này không?');
+    if (!confirmDelete) return;
 
-  try {
-    const token = localStorage.getItem("token");
-    // const response = await axios.delete(`http://localhost:3000/api/group/${groupID}`, {
-    //   headers: { Authorization: `Bearer ${token}` },
-    // });
-    console.log("Xóa nhóm thành công:");
-    socket.emit("deleteGroup", user.userID,groupID,()=>{}); // Phát sự kiện xóa nhóm
-    await fetchGroups(token, user.userID);
-    onBack();
-  } catch (err) {
-    console.error("Lỗi khi xóa nhóm:", err.response?.data || err.message);
-    alert("Không thể xóa nhóm. Vui lòng thử lại!");
-  }
-};
+    try {
+      const token = localStorage.getItem('token');
+      // const response = await axios.delete(`http://localhost:3000/api/group/${groupID}`, {
+      //   headers: { Authorization: `Bearer ${token}` },
+      // });
+      socket.emit('deleteGroup', user.userID, groupID, res => {
+        console.log(res);
+        alert(res);
+        fetchGroups(token, user.userID).then(() => onBack());
+      });
+    } catch (err) {
+      console.error('Lỗi khi xóa nhóm:', err.response?.data || err.message);
+      alert('Không thể xóa nhóm. Vui lòng thử lại!');
+    }
+  };
 
   const handleSwitchLeader = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
       // await axios.put(
       //   `http://localhost:3000/api/group/switchRole`,
       //   { userID: user.userID, targetUserID: selectedMemberToLead.userID, groupID },
       //   { headers: { Authorization: `Bearer ${token}` } }
       // );
-      socket.emit("switchRole",user.userID, selectedMemberToLead, groupID,()=>{} );
+      socket.emit('switchRole', user.userID, selectedMemberToLead, groupID, () => {});
       setShowSwitchLeaderModal(false);
       setSelectedMemberToLead(null);
       fetchGroupInfo();
       fetchGroups(token, user.userID);
-      alert("Chuyển quyền Leader thành công!");
+      alert('Chuyển quyền Leader thành công!');
     } catch (err) {
-      console.error("Lỗi khi chuyển quyền Leader:", err);
-      alert("Lỗi khi chuyển quyền Leader!");
+      console.error('Lỗi khi chuyển quyền Leader:', err);
+      alert('Lỗi khi chuyển quyền Leader!');
     }
   };
 
-  const getAvatarUrl = (avatar) => {
-    return avatar && avatar !== "NONE" ? avatar : "https://picsum.photos/40";
+  const handleReplyMessage = msg => {
+    setReplyMessage(msg);
   };
 
-  const isLeader = members.find((m) => m.userID === user.userID)?.memberRole === "LEADER";
+  const handleShareMessage = (type, itemID, msg) => {
+    // console.log('Share message comming soon', { type, itemID, msg });
+    const messageData = {
+      messageID: msg.messageID, //messageID của tin nhắn được chuyển tiếp
+      sharerID: user.userID, //userID của người chuyển tiếp tin nhắn
+      receiverID: type === 'contact' ? itemID : null, //userID của người nhận tin nhắn, null nếu đang chuyển tiếp tin nhắn vào nhóm
+      groupID: type === 'group' ? itemID : null, //groupID của group nhận tin nhắn, null nếu chuyển tiếp tin nhắn cho 1 người dùng
+    };
+    if (type === 'group') {
+      socket.emit('shareMessage', messageData, () => {
+        console.log('Message shared to group successfully');
+      });
+    } else if (type === 'contact') {
+      socket.emit('shareMessage', messageData, () => {
+        console.log('Message shared to contact successfully');
+      });
+    }
+  };
+
+  const handleRecallMessage = msg => {
+    const confirmRecall = window.confirm('Bạn có chắc chắn muốn thu hồi tin nhắn này không?');
+    if (!confirmRecall) return;
+
+    socket.emit('recallMessage', msg.messageID, user.userID, res => {
+      console.log(res);
+    });
+  };
+
+  const getAvatarUrl = avatar => {
+    return avatar && avatar !== 'NONE' ? avatar : 'https://picsum.photos/40';
+  };
+
+  const isLeader = members.find(m => m.userID === user.userID)?.memberRole === 'LEADER';
 
   return (
     <div className="group-chat-box-container">
@@ -357,6 +452,9 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
             <div className="group-options-item" onClick={() => setShowAddMemberModal(true)}>
               Thêm thành viên
             </div>
+            <div className="group-options-item" onClick={() => setShowGroupMembers(true)}>
+              Xem thành viên
+            </div>
             {isLeader && (
               <div className="group-options-item" onClick={() => setShowKickMemberModal(true)}>
                 Xóa thành viên
@@ -381,27 +479,97 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
           </div>
         )}
       </div>
-      <div className="group-chat-box-messages">
-        {messages.map((msg) => (
+      <div className="group-chat-box-messages" ref={messageBoxRef}>
+        {messages.map((msg, i) => (
           <div
             key={msg.messageID}
-            className={`message ${msg.senderID === user.userID ? "sent" : "received"}`}
+            className={`message ${msg.senderID === user.userID ? 'sent' : 'received'}`}
           >
-            <div className="message-content">{msg.context}</div>
+            <div className="message-wrapper">
+              {msg.senderID === user.userID && (
+                <div className="message-action-wrapper">
+                  <ReplyIcon className="action-icon" onClick={() => handleReplyMessage(msg)} />
+                  <ShareIcon
+                    className="action-icon"
+                    onClick={() => {
+                      setSelectedMessageToShare(msg);
+                      setShowShareMessageModal(true);
+                    }}
+                  />
+                  <RestoreIcon
+                    className="action-icon"
+                    onClick={() => {
+                      handleRecallMessage(msg);
+                    }}
+                  />
+                </div>
+              )}
+              <div className="message-content">{msg.context}</div>
+              {msg.senderID !== user.userID && (
+                <div className="message-action-wrapper">
+                  <ReplyIcon className="action-icon" onClick={() => handleReplyMessage(msg)} />
+                  <ShareIcon
+                    className="action-icon"
+                    onClick={() => {
+                      setSelectedMessageToShare(msg);
+                      setShowShareMessageModal(true);
+                    }}
+                  />
+                </div>
+              )}
+            </div>
             <div className="message-meta">
-              <span className="message-time">
-                {new Date(msg.createdAt).toLocaleTimeString()}
-              </span>
+              <span className="message-time">{new Date(msg.createdAt).toLocaleTimeString()}</span>
             </div>
           </div>
         ))}
       </div>
+
+      {replyMessage && (
+        <Box
+          sx={{
+            backgroundColor: 'grey.200',
+            borderRadius: 2,
+            padding: 1,
+            marginBottom: 1,
+            borderLeft: '4px solid',
+            borderColor: 'primary.main',
+            transition: 'opacity 0.3s ease',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: 'text.primary',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                maxWidth: '85%',
+              }}
+            >
+              Replying to: {replyMessage.context}
+            </Typography>
+            <IconButton
+              size="small"
+              onClick={() => setReplyMessage(null)}
+              aria-label="cancel reply"
+              sx={{
+                color: 'text.secondary',
+                '&:hover': { color: 'error.main' },
+              }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        </Box>
+      )}
       <div className="group-chat-box-input">
         <form onSubmit={handleSendMessage} className="input-group">
           <input
             type="text"
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={e => setNewMessage(e.target.value)}
             placeholder="Nhập tin nhắn..."
           />
           <button type="submit">
@@ -420,15 +588,15 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
               </button>
             </div>
             <ul className="contact-list">
-              {contacts.map((contact) => (
+              {contacts.map(contact => (
                 <li key={contact.userID}>
                   <input
                     type="checkbox"
                     checked={selectedContacts.includes(contact.userID)}
                     onChange={() => {
-                      setSelectedContacts((prev) =>
+                      setSelectedContacts(prev =>
                         prev.includes(contact.userID)
-                          ? prev.filter((id) => id !== contact.userID)
+                          ? prev.filter(id => id !== contact.userID)
                           : [...prev, contact.userID]
                       );
                     }}
@@ -449,90 +617,54 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
         </div>
       )}
 
-      {showKickMemberModal && (
+      <KickMemberModal
+        open={showKickMemberModal}
+        onClose={() => setShowKickMemberModal(false)}
+        groupID={groupID}
+        user={user}
+        handleKickMember={handleKickMember}
+      />
+
+      {showRenameModal && (
         <div className="modal-overlay">
           <div className="modal">
             <div className="modal-header">
-              <h2>Xóa thành viên</h2>
-              <button className="modal-close" onClick={() => setShowKickMemberModal(false)}>
+              <h2>Đổi tên nhóm</h2>
+              <button className="modal-close" onClick={() => setShowRenameModal(false)}>
                 <i className="fas fa-times"></i>
               </button>
             </div>
-            <ul className="contact-list">
-              {members
-                .filter((m) => m.userID !== user.userID)
-                .map((member) => (
-                  <li
-                    key={member.userID}
-                    onClick={() => setSelectedMemberToKick(member)}
-                    style={{
-                      cursor: "pointer",
-                      background:
-                        selectedMemberToKick?.userID === member.userID
-                          ? "#f0f2f5"
-                          : "transparent",
-                    }}
-                  >
-                    {member.username} {member.memberRole === "LEADER" && "(Leader)"}
-                  </li>
-                ))}
-            </ul>
+            <div className="form-group">
+              <label htmlFor="newGroupName">Tên nhóm mới</label>
+              <input
+                type="text"
+                id="newGroupName"
+                value={newGroupName}
+                onChange={e => setNewGroupName(e.target.value)}
+                placeholder="Nhập tên nhóm mới..."
+                className="rename-input"
+                maxLength={50} // Giới hạn độ dài tên nhóm
+                autoFocus
+              />
+              {newGroupName.trim().length === 0 && (
+                <p className="error-message">Tên nhóm không được để trống!</p>
+              )}
+            </div>
             <div className="modal-buttons">
               <button
                 className="save-button"
-                onClick={handleKickMember}
-                disabled={!selectedMemberToKick}
+                onClick={handleRenameGroup}
+                disabled={!newGroupName.trim()} // Vô hiệu hóa nút nếu tên nhóm trống
               >
-                Xóa
+                Lưu
               </button>
-              <button className="cancel-button" onClick={() => setShowKickMemberModal(false)}>
+              <button className="cancel-button" onClick={() => setShowRenameModal(false)}>
                 Hủy
               </button>
             </div>
           </div>
         </div>
       )}
-
-      {showRenameModal && (
-  <div className="modal-overlay">
-    <div className="modal">
-      <div className="modal-header">
-        <h2>Đổi tên nhóm</h2>
-        <button className="modal-close" onClick={() => setShowRenameModal(false)}>
-          <i className="fas fa-times"></i>
-        </button>
-      </div>
-      <div className="form-group">
-        <label htmlFor="newGroupName">Tên nhóm mới</label>
-        <input
-          type="text"
-          id="newGroupName"
-          value={newGroupName}
-          onChange={(e) => setNewGroupName(e.target.value)}
-          placeholder="Nhập tên nhóm mới..."
-          className="rename-input"
-          maxLength={50} // Giới hạn độ dài tên nhóm
-          autoFocus
-        />
-        {newGroupName.trim().length === 0 && (
-          <p className="error-message">Tên nhóm không được để trống!</p>
-        )}
-      </div>
-      <div className="modal-buttons">
-        <button
-          className="save-button"
-          onClick={handleRenameGroup}
-          disabled={!newGroupName.trim()} // Vô hiệu hóa nút nếu tên nhóm trống
-        >
-          Lưu
-        </button>
-        <button className="cancel-button" onClick={() => setShowRenameModal(false)}>
-          Hủy
-        </button>
-      </div>
-    </div>
-  </div>
-)}
 
       {showSwitchLeaderModal && (
         <div className="modal-overlay">
@@ -545,17 +677,15 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
             </div>
             <ul className="contact-list">
               {members
-                .filter((m) => m.userID !== user.userID)
-                .map((member) => (
+                .filter(m => m.userID !== user.userID)
+                .map(member => (
                   <li
                     key={member.userID}
                     onClick={() => setSelectedMemberToLead(member)}
                     style={{
-                      cursor: "pointer",
+                      cursor: 'pointer',
                       background:
-                        selectedMemberToLead?.userID === member.userID
-                          ? "#f0f2f5"
-                          : "transparent",
+                        selectedMemberToLead?.userID === member.userID ? '#f0f2f5' : 'transparent',
                     }}
                   >
                     {member.username}
@@ -577,6 +707,20 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
           </div>
         </div>
       )}
+
+      <ShareMessageModal
+        open={showShareMessageModal}
+        onClose={() => setShowShareMessageModal(false)}
+        message={selectedMessageToShare}
+        onShare={handleShareMessage}
+        userID={user.userID}
+      />
+
+      <GroupMembers
+        open={showGroupMembers}
+        onClose={() => setShowGroupMembers(false)}
+        groupID={groupID}
+      />
     </div>
   );
 }

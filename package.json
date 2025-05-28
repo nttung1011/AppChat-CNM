@@ -12,6 +12,7 @@
         "@testing-library/jest-dom": "^6.6.3",
         "@testing-library/react": "^16.2.0",
         "@testing-library/user-event": "^13.5.0",
+        "appchat": "file:",
         "aws-sdk": "^2.1692.0",
         "axios": "^1.8.4",
         "bcrypt": "^5.1.1",
