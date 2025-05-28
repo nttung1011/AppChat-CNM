@@ -1,346 +1,390 @@
 .group-chat-box-container {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    width: 100%;
-    border-left: 1px solid #ccc;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  border-left: 1px solid #ccc;
 }
 
 .group-chat-box-header {
-    display: flex;
-    align-items: center;
-    padding: 10px 15px;
-    background: #f0f0f0;
-    border-bottom: 1px solid #ccc;
-    height: 60px;
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  background: #f0f0f0;
+  border-bottom: 1px solid #ccc;
+  height: 60px;
 }
 
 .back-button {
-    background: none;
-    border: none;
-    font-size: 20px;
-    cursor: pointer;
-    color: #007bff;
-    margin-right: 15px;
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #007bff;
+  margin-right: 15px;
 }
 
 .group-info {
-    display: flex;
-    align-items: center;
-    flex: 1;
+  display: flex;
+  align-items: center;
+  flex: 1;
 }
 
 .group-avatar {
-    position: relative;
-    width: 40px;
-    height: 40px;
-    margin-right: 10px;
+  position: relative;
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
 }
 
 .group-avatar img {
-    position: absolute;
-    width: 25px;
-    height: 25px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 1px solid #fff;
+  position: absolute;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #fff;
 }
 
 .group-avatar .avatar-0 {
-    top: 0;
-    left: 0;
+  top: 0;
+  left: 0;
 }
 
 .group-avatar .avatar-1 {
-    top: 10px;
-    left: 10px;
+  top: 10px;
+  left: 10px;
 }
 
 .group-avatar .avatar-2 {
-    top: 20px;
-    left: 20px;
+  top: 20px;
+  left: 20px;
 }
 
 .group-info span {
-    font-size: 16px;
-    font-weight: 500;
+  font-size: 16px;
+  font-weight: 500;
 }
 
 .connection-status {
-    font-size: 12px;
-    color: #555;
+  font-size: 12px;
+  color: #555;
 }
 
 .group-options-button {
-    background: none;
-    border: none;
-    font-size: 18px;
-    cursor: pointer;
-    color: #007bff;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #007bff;
 }
 
 .group-options-menu {
-    position: absolute;
-    background: white;
-    border-radius: 5px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    z-index: 1000;
-    padding: 5px 0;
-    min-width: 150px;
-    right: 15px;
-    top: 60px;
+  position: absolute;
+  background: white;
+  border-radius: 5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  padding: 5px 0;
+  min-width: 150px;
+  right: 15px;
+  top: 60px;
 }
 
 .group-options-item {
-    padding: 8px 12px;
-    font-size: 13px;
-    color: #333;
-    cursor: pointer;
-    transition: background-color 0.2s ease;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 
 .group-options-item:hover {
-    background-color: #f0f2f5;
+  background-color: #f0f2f5;
 }
 
 .group-chat-box-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 15px;
-    background: #f5f5f5;
-    display: flex;
-    flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;
+  background: #f5f5f5;
+  display: flex;
+  flex-direction: column;
 }
 
 .message {
-    margin-bottom: 10px;
-    display: flex;
-    flex-direction: column;
-    max-width: 100%;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
 }
 
 .message.sent {
-    align-items: flex-end;
+  align-items: flex-end;
 }
 
 .message.received {
-    align-items: flex-start;
+  align-items: flex-start;
 }
 
 .message-content {
-    max-width: 70%;
-    padding: 8px 12px;
-    border-radius: 15px;
-    background: #e0e0e0;
-    word-wrap: break-word;
+  max-width: 70%;
+  padding: 8px 12px;
+  border-radius: 15px;
+  background: #e0e0e0;
+  word-wrap: break-word;
+}
+
+.message-wrapper {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.message-action-wrapper {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 0 5px;
+}
+
+.message-wrapper:hover .message-action-wrapper {
+  display: flex;
+}
+
+.action-icon {
+  font-size: 18px;
+  color: #666;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.action-icon:hover {
+  color: #007bff;
+}
+
+.message.sent .message-action-wrapper {
+  order: -1;
+  margin-right: 8px;
+}
+
+.message.sent .message-wrapper {
+  justify-content: end;
+}
+
+.message.received .message-action-wrapper {
+  margin-left: 8px;
+}
+
+.message.received .message-content {
+  background: #e0e0e0;
 }
 
 .message.sent .message-content {
-    background: #007bff;
-    color: white;
+  background: #007bff;
+  color: white;
 }
 
 .message-meta {
-    font-size: 12px;
-    color: #666;
-    margin-top: 5px;
+  font-size: 12px;
+  color: #666;
+  margin-top: 5px;
 }
 
 .message-time {
-    font-size: 11px;
-    color: #777;
+  font-size: 11px;
+  color: #777;
 }
 
 .group-chat-box-input {
-    display: flex;
-    padding: 10px 15px;
-    background: #f0f0f0;
-    border-top: 1px solid #ccc;
-    height: 60px;
-    align-items: center;
+  display: flex;
+  padding: 10px 15px;
+  background: #f0f0f0;
+  border-top: 1px solid #ccc;
+  height: 60px;
+  align-items: center;
 }
 
 .input-group {
-    display: flex;
-    flex: 1;
-    align-items: center;
-    background: #fff;
-    border: 1px solid #ccc;
-    border-radius: 20px;
-    padding: 5px 10px;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  padding: 5px 10px;
 }
 
-.group-chat-box-input input[type="text"] {
-    flex: 1;
-    padding: 8px;
-    border: none;
-    outline: none;
-    border-radius: 20px;
-    font-size: 14px;
+.group-chat-box-input input[type='text'] {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  outline: none;
+  border-radius: 20px;
+  font-size: 14px;
 }
 
 .group-chat-box-input button {
-    background: none;
-    border: none;
-    font-size: 18px;
-    cursor: pointer;
-    color: #007bff;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #007bff;
 }
 
 .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 2000;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
 }
 
 .modal {
-    background-color: #fff;
-    border-radius: 12px;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-    width: 100%;
-    max-width: 400px;
-    padding: 20px;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 400px;
+  padding: 20px;
 }
 
 .modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
 .modal-header h2 {
-    font-size: 1.5rem;
-    color: #333;
-    margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+  margin: 0;
 }
 
 .modal-close {
-    background: none;
-    border: none;
-    font-size: 1.2rem;
-    color: #666;
-    cursor: pointer;
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: #666;
+  cursor: pointer;
 }
 
 .modal-close:hover {
-    color: #ff4d4f;
+  color: #ff4d4f;
 }
 
 .contact-list {
-    max-height: 300px;
-    overflow-y: auto;
-    list-style: none;
-    padding: 0;
+  max-height: 300px;
+  overflow-y: auto;
+  list-style: none;
+  padding: 0;
 }
 
 .contact-list li {
-    display: flex;
-    align-items: center;
-    padding: 10px;
-    cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  cursor: pointer;
 }
 
 .contact-list li:hover {
-    background-color: #f0f2f5;
+  background-color: #f0f2f5;
 }
 
-.contact-list input[type="checkbox"] {
-    margin-right: 10px;
+.contact-list input[type='checkbox'] {
+  margin-right: 10px;
 }
 
 .modal-buttons {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
 }
 
 .save-button,
 .cancel-button {
-    padding: 10px 25px;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.1s ease;
+  padding: 10px 25px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.3s ease,
+    transform 0.1s ease;
 }
 
 .save-button {
-    background-color: #28a745;
-    color: white;
+  background-color: #28a745;
+  color: white;
 }
 
 .save-button:hover {
-    background-color: #218838;
-    transform: translateY(-2px);
+  background-color: #218838;
+  transform: translateY(-2px);
 }
 
 .cancel-button {
-    background-color: #dc3545;
-    color: white;
+  background-color: #dc3545;
+  color: white;
 }
 
 .cancel-button:hover {
-    background-color: #c82333;
-    transform: translateY(-2px);
+  background-color: #c82333;
+  transform: translateY(-2px);
 }
 
 .form-group {
-    margin-bottom: 20px;
+  margin-bottom: 20px;
 }
-
 
 /* Style cho label */
 
 .form-group label {
-    display: block;
-    font-size: 14px;
-    font-weight: 500;
-    color: #333;
-    margin-bottom: 8px;
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 8px;
 }
-
 
 /* Style cho input đổi tên nhóm */
 
 .rename-input {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.3s ease;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.3s ease;
 }
 
 .rename-input:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
 }
-
 
 /* Style cho thông báo lỗi */
 
 .error-message {
-    color: #dc3545;
-    font-size: 12px;
-    margin-top: 5px;
+  color: #dc3545;
+  font-size: 12px;
+  margin-top: 5px;
 }
-
 
 /* Style cho nút Lưu khi bị vô hiệu hóa */
 
 .save-button:disabled {
-    background-color: #6c757d;
-    cursor: not-allowed;
-    opacity: 0.6;
+  background-color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
 }

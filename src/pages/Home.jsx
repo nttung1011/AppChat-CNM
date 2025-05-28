@@ -1,11 +1,12 @@
-import { useEffect, useState, useCallback } from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
-import ChatBox from "../pages/ChatBox";
-import GroupChatBox from "../pages/GroupChatBox";
-import socket,{connectSocketWithToken} from "../socket";
-import "../styles/Home.css";
+import { useEffect, useState, useCallback, use } from 'react';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode';
+import ChatBox from '../pages/ChatBox';
+import GroupChatBox from '../pages/GroupChatBox';
+import socket, { connectSocketWithToken } from '../socket';
+import '../styles/Home.css';
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 export default function Home() {
   const [user, setUser] = useState(null);
@@ -15,43 +16,45 @@ export default function Home() {
   const [selectedChat, setSelectedChat] = useState(null);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState('all');
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
   const [passwordData, setPasswordData] = useState({
-    oldPassword: "",
-    newPassword: "",
-    confirmPassword: "",
+    oldPassword: '',
+    newPassword: '',
+    confirmPassword: '',
   });
-  const [passwordError, setPasswordError] = useState("");
-  const [passwordSuccess, setPasswordSuccess] = useState("");
-  const [searchPhone, setSearchPhone] = useState("");
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [searchPhone, setSearchPhone] = useState('');
   const [searchResult, setSearchResult] = useState(null);
-  const [searchError, setSearchError] = useState("");
+  const [searchError, setSearchError] = useState('');
   const [selectedContactToDelete, setSelectedContactToDelete] = useState(null);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
-  const [groupName, setGroupName] = useState("");
+  const [groupName, setGroupName] = useState('');
   const [currentSlide, setCurrentSlide] = useState(0);
   const navigate = useNavigate();
 
   const thumbnails = [
     {
       id: 1,
-      image: "https://cdn-media.sforum.vn/storage/app/media/ctvseo_phung/zalo-gioi-han-bao-nhieu-ban-be/zalo-gioi-han-bao-nhieu-ban-be-thumb.jpg",
-      title: "Tính năng nổi bật",
-      description: "Kết nối với bạn bè mọi lúc, mọi nơi.",
+      image:
+        'https://cdn-media.sforum.vn/storage/app/media/ctvseo_phung/zalo-gioi-han-bao-nhieu-ban-be/zalo-gioi-han-bao-nhieu-ban-be-thumb.jpg',
+      title: 'Tính năng nổi bật',
+      description: 'Kết nối với bạn bè mọi lúc, mọi nơi.',
     },
     {
       id: 2,
-      image: "https://didongviet.vn/dchannel/wp-content/uploads/2021/12/nhom-zalo-didongviet.jpg",
-      title: "Tính năng nổi bật",
-      description: "Tạo nhóm chat và làm việc hiệu quả.",
+      image: 'https://didongviet.vn/dchannel/wp-content/uploads/2021/12/nhom-zalo-didongviet.jpg',
+      title: 'Tính năng nổi bật',
+      description: 'Tạo nhóm chat và làm việc hiệu quả.',
     },
     {
       id: 3,
-      image: "https://i0.wp.com/help.zalo.me/wp-content/uploads/2023/12/LanguageVIE.png?fit=4200%2C2730&ssl=1 ",
-      title: "Tính năng nổi bật",
-      description: "Trải nghiệm giao tiếp liền mạch.",
+      image:
+        'https://i0.wp.com/help.zalo.me/wp-content/uploads/2023/12/LanguageVIE.png?fit=4200%2C2730&ssl=1 ',
+      title: 'Tính năng nổi bật',
+      description: 'Trải nghiệm giao tiếp liền mạch.',
     },
   ];
 
@@ -62,27 +65,33 @@ export default function Home() {
   //   return () => clearInterval(interval);
   // }, [thumbnails.length]);
   const truncateText = (text, maxLength = 30) => {
-    if (!text) return "";
-    return text.length > maxLength ? text.slice(0, maxLength) + "..." : text;
+    if (!text) return '';
+    return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
   };
 
   const refreshAccessToken = useCallback(async () => {
     try {
-      const refreshToken = localStorage.getItem("refreshToken");
-      if (!refreshToken) throw new Error("Không có refresh token");
-      const res = await axios.post("http://localhost:3000/api/auth/refreshToken", {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) throw new Error('Không có refresh token');
+      const res = await axios.post('http://localhost:3000/api/auth/refreshToken', {
         refreshToken,
       });
       const newAccessToken = res.data.accessToken;
-      localStorage.setItem("token", newAccessToken);
+      localStorage.setItem('token', newAccessToken);
       return newAccessToken;
     } catch (error) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("refreshToken");
-      navigate("/");
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
+      navigate('/');
       return null;
     }
   }, [navigate]);
+
+  useEffect(() => {
+    if (selectedGroup) {
+      socket.emit('joinGroupRoom', selectedGroup);
+    }
+  }, [selectedGroup]);
 
   const fetchChats = useCallback(async (token, userID) => {
     try {
@@ -91,24 +100,26 @@ export default function Home() {
       });
       if (Array.isArray(chatsRes.data)) {
         const sortedChats = chatsRes.data.sort((a, b) => {
-          const lastMessageA = a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
-          const lastMessageB = b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
+          const lastMessageA =
+            a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
+          const lastMessageB =
+            b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
           return lastMessageB - lastMessageA;
         });
         const sortedChatsWithAvatar = await Promise.all(
-          sortedChats.map(async (chat) => {
+          sortedChats.map(async chat => {
             try {
               const res = await fetch(`http://localhost:3000/api/user/${chat.conversation.userID}`);
               const data = await res.json();
-              return { 
+              return {
                 ...chat,
-                conversation:{
+                conversation: {
                   ...chat.conversation,
-                  avatar: getAvatarUrl(data.avatar)
-                }
+                  avatar: getAvatarUrl(data.avatar),
+                },
               };
             } catch (err) {
-              console.error("Lỗi khi fetch avatar:", err);
+              console.error('Lỗi khi fetch avatar:', err);
               return { ...chat, avatar: null };
             }
           })
@@ -118,7 +129,7 @@ export default function Home() {
         setChatList([]);
       }
     } catch (err) {
-      console.error("Lỗi khi lấy danh sách chat:", err.response?.data || err.message);
+      console.error('Lỗi khi lấy danh sách chat:', err.response?.data || err.message);
       setChatList([]);
     }
   }, []);
@@ -129,16 +140,25 @@ export default function Home() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const groupDetails = await Promise.all(
-        groupsRes.data.map(async (member) => {
-          const groupRes = await axios.get(`http://localhost:3000/api/group/${member.groupID}/info`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const membersRes = await axios.get(`http://localhost:3000/api/group/${member.groupID}/users`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const messagesRes = await axios.get(`http://localhost:3000/api/message/group/${member.groupID}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+        groupsRes.data.map(async member => {
+          const groupRes = await axios.get(
+            `http://localhost:3000/api/group/${member.groupID}/info`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          const membersRes = await axios.get(
+            `http://localhost:3000/api/group/${member.groupID}/users`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          const messagesRes = await axios.get(
+            `http://localhost:3000/api/message/group/${member.groupID}`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
           return {
             group: groupRes.data.data,
             members: membersRes.data.data,
@@ -147,22 +167,24 @@ export default function Home() {
         })
       );
       const sortedGroups = groupDetails.sort((a, b) => {
-        const lastMessageA = a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
-        const lastMessageB = b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
+        const lastMessageA =
+          a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
+        const lastMessageB =
+          b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
         return lastMessageB - lastMessageA;
       });
       setGroupList(sortedGroups);
     } catch (err) {
-      console.error("Lỗi khi lấy danh sách nhóm:", err);
+      console.error('Lỗi khi lấy danh sách nhóm:', err);
       setGroupList([]);
     }
   }, []);
 
   useEffect(() => {
     const fetchUserAndData = async () => {
-      let token = localStorage.getItem("token");
+      let token = localStorage.getItem('token');
       if (!token) {
-        navigate("/");
+        navigate('/');
         return;
       }
       try {
@@ -180,7 +202,7 @@ export default function Home() {
           headers: { Authorization: `Bearer ${token}` },
         });
         const contactsData = await Promise.all(
-          contactsRes.data.map(async (contact) => {
+          contactsRes.data.map(async contact => {
             const contactRes = await axios.get(`http://localhost:3000/api/user/${contact.userID}`, {
               headers: { Authorization: `Bearer ${token}` },
             });
@@ -189,7 +211,7 @@ export default function Home() {
         );
         setContacts(contactsData);
       } catch (err) {
-        console.error("Lỗi khi lấy dữ liệu:", err.response?.data || err.message);
+        console.error('Lỗi khi lấy dữ liệu:', err.response?.data || err.message);
         if (err.response?.status === 401) {
           token = await refreshAccessToken();
           if (token) {
@@ -197,32 +219,44 @@ export default function Home() {
               const decodedToken = jwtDecode(token);
               const userID = decodedToken.userID;
               const userRes = await axios.get(`http://localhost:3000/api/user/${userID}`, {
-                headers: { Authorization: `Bearer ${token}` },
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
               });
               setUser(userRes.data);
               await fetchChats(token, userID);
               await fetchGroups(token, userID);
-              const contactsRes = await axios.get(`http://localhost:3000/api/user/${userID}/contacts`, {
-                headers: { Authorization: `Bearer ${token}` },
-              });
+              const contactsRes = await axios.get(
+                `http://localhost:3000/api/user/${userID}/contacts`,
+                {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                }
+              );
               const contactsData = await Promise.all(
-                contactsRes.data.map(async (contact) => {
-                  const contactRes = await axios.get(`http://localhost:3000/api/user/${contact.userID}`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                  });
+                contactsRes.data.map(async contact => {
+                  const contactRes = await axios.get(
+                    `http://localhost:3000/api/user/${contact.userID}`,
+                    {
+                      headers: {
+                        Authorization: `Bearer ${token}`,
+                      },
+                    }
+                  );
                   return contactRes.data;
                 })
               );
               setContacts(contactsData);
             } catch (retryErr) {
-              console.error("Lỗi khi thử lại:", retryErr);
-              navigate("/");
+              console.error('Lỗi khi thử lại:', retryErr);
+              navigate('/');
             }
           } else {
-            navigate("/");
+            navigate('/');
           }
         } else {
-          navigate("/");
+          navigate('/');
         }
       }
     };
@@ -230,51 +264,56 @@ export default function Home() {
   }, [navigate, refreshAccessToken, fetchChats, fetchGroups]);
 
   useEffect(() => {
-    let token = localStorage.getItem("token");
-    const setUpSocket=async()=>{
-      if(user){
-        connectSocketWithToken()
-        socket.emit("joinUserRoom", user.userID);
+    let token = localStorage.getItem('token');
+    const setUpSocket = async () => {
+      if (user) {
+        connectSocketWithToken();
+        socket.emit('joinUserRoom', user.userID);
         try {
           const groupsRes = await axios.get(`http://localhost:3000/api/group/${user.userID}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
-          for(const group of groupsRes.data){
-            socket.emit("joinGroupRoom",group.groupID)
+          for (const group of groupsRes.data) {
+            socket.emit('joinGroupRoom', group.groupID);
           }
         } catch (err) {
-          console.error("Lỗi khi lấy danh sách nhóm:", err);
+          console.error('Lỗi khi lấy danh sách nhóm:', err);
           setGroupList([]);
           if (err.response?.status === 401) {
             token = await refreshAccessToken();
             if (token) {
               try {
-                const groupsRes = await axios.get(`http://localhost:3000/api/group/${user.userID}`, {
-                  headers: { Authorization: `Bearer ${token}` },
-                });
-                for(const group of groupsRes.data){
-                  socket.emit("joinGroupRoom",group.groupID)
+                const groupsRes = await axios.get(
+                  `http://localhost:3000/api/group/${user.userID}`,
+                  {
+                    headers: {
+                      Authorization: `Bearer ${token}`,
+                    },
+                  }
+                );
+                for (const group of groupsRes.data) {
+                  socket.emit('joinGroupRoom', group.groupID);
                 }
               } catch (retryErr) {
-                console.error("Lỗi khi thử lại:", retryErr);
-                navigate("/");
+                console.error('Lỗi khi thử lại:', retryErr);
+                navigate('/');
               }
             } else {
-              navigate("/");
+              navigate('/');
             }
           } else {
-            navigate("/");
+            navigate('/');
           }
         }
       }
-    }
-    // setUpSocket()
-  }, [user]);
+    };
+    setUpSocket();
+  }, [user, refreshAccessToken]);
 
-  const handleReceiveMessageHome=async (message) => {
-    if (message.groupID && message.groupID !== "NONE") {
-      setGroupList((prevGroupList) => {
-        const groupIndex = prevGroupList.findIndex((g) => g.group.groupID === message.groupID);
+  const handleReceiveMessageHome = async message => {
+    if (message.groupID && message.groupID !== 'NONE') {
+      setGroupList(prevGroupList => {
+        const groupIndex = prevGroupList.findIndex(g => g.group.groupID === message.groupID);
         if (groupIndex >= 0) {
           const updatedGroupList = [...prevGroupList];
           updatedGroupList[groupIndex].messages.push(message);
@@ -283,25 +322,27 @@ export default function Home() {
             ...updatedGroupList.slice(0, groupIndex),
             ...updatedGroupList.slice(groupIndex + 1),
           ].sort((a, b) => {
-            const lastMessageA = a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
-            const lastMessageB = b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
+            const lastMessageA =
+              a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
+            const lastMessageB =
+              b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
             return lastMessageB - lastMessageA;
           });
         }
         return prevGroupList;
       });
     } else {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
       try {
-        const partnerID=message.senderID===user.userID?message.receiverID:message.senderID
+        const partnerID = message.senderID === user.userID ? message.receiverID : message.senderID;
         const partnerRes = await axios.get(`http://localhost:3000/api/user/${partnerID}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const partner = partnerRes.data;
 
-        setChatList((prevChatList) => {
+        setChatList(prevChatList => {
           const existingChatIndex = prevChatList.findIndex(
-            (chat) => chat.conversation.userID === partnerID
+            chat => chat.conversation.userID === partnerID
           );
 
           if (existingChatIndex >= 0) {
@@ -312,8 +353,10 @@ export default function Home() {
               ...updatedChatList.slice(0, existingChatIndex),
               ...updatedChatList.slice(existingChatIndex + 1),
             ].sort((a, b) => {
-              const lastMessageA = a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
-              const lastMessageB = b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
+              const lastMessageA =
+                a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
+              const lastMessageB =
+                b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
               return lastMessageB - lastMessageA;
             });
           } else {
@@ -321,31 +364,33 @@ export default function Home() {
               conversation: {
                 userID: partnerID,
                 username: partner.username,
-                avatar: partner.avatar || "NONE",
+                avatar: partner.avatar || 'NONE',
               },
               messages: [message],
             };
             return [newChat, ...prevChatList].sort((a, b) => {
-              const lastMessageA = a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
-              const lastMessageB = b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
+              const lastMessageA =
+                a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
+              const lastMessageB =
+                b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
               return lastMessageB - lastMessageA;
             });
           }
         });
       } catch (err) {
-        console.error("Lỗi khi lấy thông tin người gửi:", err);
+        console.error('Lỗi khi lấy thông tin người gửi:', err);
       }
     }
-  }
+  };
 
   useEffect(() => {
-    socket.on("receiveMessage", handleReceiveMessageHome);
+    socket.on('receiveMessage', handleReceiveMessageHome);
 
-    socket.on("updateChatList", (data) => {
+    socket.on('updateChatList', data => {
       if (data.userID === user?.userID) {
-        setChatList((prevChatList) => {
+        setChatList(prevChatList => {
           const existingChatIndex = prevChatList.findIndex(
-            (chat) => chat.conversation.userID === data.partnerID
+            chat => chat.conversation.userID === data.partnerID
           );
 
           if (existingChatIndex >= 0) {
@@ -356,8 +401,10 @@ export default function Home() {
               ...updatedChatList.slice(0, existingChatIndex),
               ...updatedChatList.slice(existingChatIndex + 1),
             ].sort((a, b) => {
-              const lastMessageA = a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
-              const lastMessageB = b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
+              const lastMessageA =
+                a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
+              const lastMessageB =
+                b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
               return lastMessageB - lastMessageA;
             });
           } else {
@@ -370,8 +417,10 @@ export default function Home() {
               messages: [data.message],
             };
             return [newChat, ...prevChatList].sort((a, b) => {
-              const lastMessageA = a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
-              const lastMessageB = b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
+              const lastMessageA =
+                a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
+              const lastMessageB =
+                b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
               return lastMessageB - lastMessageA;
             });
           }
@@ -379,65 +428,105 @@ export default function Home() {
       }
     });
 
-    socket.on("groupCreated", ({ groupID }) => {
-      fetchGroups(localStorage.getItem("token"), user.userID);
+    socket.on('groupCreated', ({ groupID }) => {
+      fetchGroups(localStorage.getItem('token'), user.userID);
     });
 
-    socket.on("groupRenamed", ({ groupID: renamedGroupID }) => {
-      fetchGroups(localStorage.getItem("token"), user.userID);
+    socket.on('groupRenamed', ({ groupID: renamedGroupID }) => {
+      fetchGroups(localStorage.getItem('token'), user.userID);
     });
 
-    socket.on("memberAdded", ({ groupID: updatedGroupID }) => {
-      fetchGroups(localStorage.getItem("token"), user.userID);
+    socket.on('memberAdded', ({ groupID: updatedGroupID }) => {
+      fetchGroups(localStorage.getItem('token'), user.userID);
     });
 
-    socket.on("memberKicked", ({ groupID: updatedGroupID }) => {
-      fetchGroups(localStorage.getItem("token"), user.userID);
+    socket.on('memberKicked', ({ groupID: updatedGroupID }) => {
+      fetchGroups(localStorage.getItem('token'), user.userID);
     });
 
-    socket.on("memberLeft", ({ groupID: updatedGroupID }) => {
-      fetchGroups(localStorage.getItem("token"), user.userID);
+    socket.on('memberLeft', ({ groupID: updatedGroupID }) => {
+      fetchGroups(localStorage.getItem('token'), user.userID);
     });
 
-    socket.on("leaderSwitched", ({ groupID: updatedGroupID }) => {
-      fetchGroups(localStorage.getItem("token"), user.userID);
+    socket.on('leaderSwitched', ({ groupID: updatedGroupID }) => {
+      fetchGroups(localStorage.getItem('token'), user.userID);
+    });
+
+    socket.on('newMember', userID => {
+      console.log('New member joined:', userID);
+      if (userID === user.userID) {
+        fetchGroups(localStorage.getItem('token'), user.userID);
+      }
+    });
+
+    socket.on('forceLeaveGroup', (leavingUserID, updatedGroupID) => {
+      console.log('User forced to leave group:', leavingUserID, updatedGroupID);
+      if (leavingUserID == user.userID) {
+        fetchGroups(localStorage.getItem('token'), user.userID);
+      }
+      if (selectedGroup === updatedGroupID) {
+        setSelectedGroup(null);
+        setSelectedChat(null);
+      }
+    });
+
+    socket.on('memberLeft', (updatedGroupID, leftUserID) => {
+      console.log('Member left:', { updatedGroupID, leftUserID });
+      if (leftUserID === user.userID) {
+        fetchGroups(localStorage.getItem('token'), user.userID);
+        setSelectedGroup(null);
+        setSelectedChat(null);
+      }
+    });
+
+    socket.on('groupDeleted', deletedGroupID => {
+      console.log('Group deleted:', deletedGroupID);
+      fetchGroups(localStorage.getItem('token'), user.userID);
+      if (selectedGroup === deletedGroupID) {
+        setSelectedGroup(null);
+        setSelectedChat(null);
+      }
     });
 
     return () => {
-      socket.off("receiveMessage",handleReceiveMessageHome);
-      socket.off("updateChatList");
-      socket.off("groupCreated");
-      socket.off("groupRenamed");
-      socket.off("memberAdded");
-      socket.off("memberKicked");
-      socket.off("memberLeft");
-      socket.off("leaderSwitched");
+      socket.off('receiveMessage', handleReceiveMessageHome);
+      socket.off('updateChatList');
+      socket.off('groupCreated');
+      socket.off('groupRenamed');
+      socket.off('memberAdded');
+      socket.off('memberKicked');
+      socket.off('memberLeft');
+      socket.off('leaderSwitched');
+      socket.off('newMember');
+      socket.off('forceLeaveGroup');
+      socket.off('memberLeft');
+      socket.off('groupDeleted');
     };
   }, [user, fetchGroups]);
 
-  const handleSearchUser = async (e) => {
+  const handleSearchUser = async e => {
     e.preventDefault();
-    setSearchError("");
+    setSearchError('');
     setSearchResult(null);
     if (!searchPhone.trim()) {
-      setSearchError("Vui lòng nhập số điện thoại!");
+      setSearchError('Vui lòng nhập số điện thoại!');
       return;
     }
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
       const res = await axios.get(`http://localhost:3000/api/user/${searchPhone}/gmail`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const userRes = await axios.get(`http://localhost:3000/api/user`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const foundUser = userRes.data.find((u) => u.gmail === res.data.gmail);
+      const foundUser = userRes.data.find(u => u.gmail === res.data.gmail);
       if (!foundUser) {
-        setSearchError("Không tìm thấy người dùng!");
+        setSearchError('Không tìm thấy người dùng!');
         return;
       }
       if (foundUser.userID === user.userID) {
-        setSearchError("Không thể thêm chính bạn!");
+        setSearchError('Không thể thêm chính bạn!');
         return;
       }
       const latestUser = await axios.get(`http://localhost:3000/api/user/${foundUser.userID}`, {
@@ -445,25 +534,28 @@ export default function Home() {
       });
       setSearchResult(latestUser.data);
     } catch (err) {
-      setSearchError("Không tìm thấy người dùng!");
+      setSearchError('Không tìm thấy người dùng!');
     }
   };
 
   const handleAddContact = async () => {
     if (!searchResult) return;
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
       await axios.put(
         `http://localhost:3000/api/user/${user.userID}/contacts/add`,
         { contactID: searchResult.userID },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      const contactsRes = await axios.get(`http://localhost:3000/api/user/${user.userID}/contacts`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const contactsRes = await axios.get(
+        `http://localhost:3000/api/user/${user.userID}/contacts`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       const contactsData = await Promise.all(
-        contactsRes.data.map(async (contact) => {
+        contactsRes.data.map(async contact => {
           const contactRes = await axios.get(`http://localhost:3000/api/user/${contact.userID}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
@@ -473,55 +565,58 @@ export default function Home() {
       setContacts(contactsData);
 
       setSearchResult(null);
-      setSearchPhone("");
-      alert("Thêm liên hệ thành công!");
+      setSearchPhone('');
+      alert('Thêm liên hệ thành công!');
     } catch (err) {
-      setSearchError("Lỗi khi thêm liên hệ!");
+      console.error('Lỗi khi thêm liên hệ:', err.response.data?.message || err.message);
+      setSearchError('Lỗi khi thêm liên hệ!');
     }
   };
 
   const handleLogout = () => {
-    const refreshToken = localStorage.getItem("refreshToken");
+    const refreshToken = localStorage.getItem('refreshToken');
     if (refreshToken) {
-      axios.post("http://localhost:3000/api/auth/logout", { refreshToken });
+      axios.post('http://localhost:3000/api/auth/logout', {
+        refreshToken,
+      });
     }
-    localStorage.removeItem("token");
-    localStorage.removeItem("refreshToken");
-    navigate("/");
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    navigate('/');
   };
 
   const toggleDropdown = () => {
     setShowDropdown(!showDropdown);
   };
 
-  const handleChangePasswordInput = (e) => {
+  const handleChangePasswordInput = e => {
     const { name, value } = e.target;
-    setPasswordData((prev) => ({ ...prev, [name]: value }));
+    setPasswordData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleChangePassword = async (e) => {
+  const handleChangePassword = async e => {
     e.preventDefault();
-    setPasswordError("");
-    setPasswordSuccess("");
+    setPasswordError('');
+    setPasswordSuccess('');
     const { oldPassword, newPassword, confirmPassword } = passwordData;
     if (!oldPassword || !newPassword || !confirmPassword) {
-      setPasswordError("Vui lòng điền đầy đủ các trường!");
+      setPasswordError('Vui lòng điền đầy đủ các trường!');
       return;
     }
     if (newPassword !== confirmPassword) {
-      setPasswordError("Mật khẩu mới và xác nhận mật khẩu không khớp!");
+      setPasswordError('Mật khẩu mới và xác nhận mật khẩu không khớp!');
       return;
     }
     if (newPassword.length < 6) {
-      setPasswordError("Mật khẩu mới phải có ít nhất 6 ký tự!");
+      setPasswordError('Mật khẩu mới phải có ít nhất 6 ký tự!');
       return;
     }
     try {
-      let token = localStorage.getItem("token");
+      let token = localStorage.getItem('token');
       if (!token) {
         token = await refreshAccessToken();
         if (!token) {
-          setPasswordError("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!");
+          setPasswordError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!');
           handleLogout();
           return;
         }
@@ -531,61 +626,70 @@ export default function Home() {
         { oldPassword, newPassword },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setPasswordSuccess("Đổi mật khẩu thành công!");
-      setPasswordData({ oldPassword: "", newPassword: "", confirmPassword: "" });
+      setPasswordSuccess('Đổi mật khẩu thành công!');
+      setPasswordData({
+        oldPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
       setTimeout(() => {
         setShowChangePasswordModal(false);
-        setPasswordSuccess("");
+        setPasswordSuccess('');
       }, 2000);
     } catch (err) {
       if (err.response?.status === 401) {
-        setPasswordError("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!");
+        setPasswordError('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại!');
         handleLogout();
       } else if (err.response?.status === 400) {
-        setPasswordError("Mật khẩu cũ không đúng!");
+        setPasswordError('Mật khẩu cũ không đúng!');
       } else {
-        setPasswordError("Lỗi server. Vui lòng thử lại sau!");
+        setPasswordError('Lỗi server. Vui lòng thử lại sau!');
       }
     }
   };
 
   const closeModal = () => {
     setShowChangePasswordModal(false);
-    setPasswordData({ oldPassword: "", newPassword: "", confirmPassword: "" });
-    setPasswordError("");
-    setPasswordSuccess("");
+    setPasswordData({
+      oldPassword: '',
+      newPassword: '',
+      confirmPassword: '',
+    });
+    setPasswordError('');
+    setPasswordSuccess('');
   };
 
-  const getAvatarUrl = (avatar) => {
-    return avatar && avatar !== "NONE" ? avatar : "https://picsum.photos/40";
+  const getAvatarUrl = avatar => {
+    return avatar && avatar !== 'NONE' ? avatar : 'https://picsum.photos/40';
   };
 
   const handleSelectChat = (partnerID, contact = null) => {
-    setActiveTab("all");
-    const existingChat = chatList.find((chat) => chat.conversation.userID === partnerID);
+    setActiveTab('all');
+    const existingChat = chatList.find(chat => chat.conversation.userID === partnerID);
     if (!existingChat && contact) {
       const newChat = {
         conversation: {
           userID: partnerID,
           username: contact.username,
-          avatar: contact.avatar || "NONE",
+          avatar: contact.avatar || 'NONE',
         },
         messages: [],
       };
-      setChatList((prevChatList) => [
-        newChat,
-        ...prevChatList,
-      ].sort((a, b) => {
-        const lastMessageA = a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
-        const lastMessageB = b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
-        return lastMessageB - lastMessageA;
-      }));
+      setChatList(prevChatList =>
+        [newChat, ...prevChatList].sort((a, b) => {
+          const lastMessageA =
+            a.messages.length > 0 ? new Date(a.messages[a.messages.length - 1].createdAt) : 0;
+          const lastMessageB =
+            b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
+          return lastMessageB - lastMessageA;
+        })
+      );
     }
     setSelectedChat(partnerID);
     setSelectedGroup(null);
   };
 
-  const handleSelectGroup = (groupID) => {
+  const handleSelectGroup = groupID => {
     setSelectedGroup(groupID);
     setSelectedChat(null);
   };
@@ -595,19 +699,22 @@ export default function Home() {
     setSelectedGroup(null);
   };
 
-  const handleDeleteContact = async (contactID) => {
+  const handleDeleteContact = async contactID => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
       await axios.put(
         `http://localhost:3000/api/user/${user.userID}/contacts/delete`,
         { contactID },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      const contactsRes = await axios.get(`http://localhost:3000/api/user/${user.userID}/contacts`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const contactsRes = await axios.get(
+        `http://localhost:3000/api/user/${user.userID}/contacts`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       const contactsData = await Promise.all(
-        contactsRes.data.map(async (contact) => {
+        contactsRes.data.map(async contact => {
           const contactRes = await axios.get(`http://localhost:3000/api/user/${contact.userID}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
@@ -617,112 +724,117 @@ export default function Home() {
       setContacts(contactsData);
       setShowConfirmDelete(false);
       setSelectedContactToDelete(null);
-      alert("Xóa liên hệ thành công!");
+      alert('Xóa liên hệ thành công!');
     } catch (err) {
-      setSearchError("Lỗi khi xóa liên hệ!");
+      setSearchError('Lỗi khi xóa liên hệ!');
     }
   };
 
-  const getLastMessageInfo = (chat) => {
-    if (!chat.messages || chat.messages.length === 0) return "";
+  const getLastMessageInfo = chat => {
+    if (!chat.messages || chat.messages.length === 0) return '';
     const lastMessage = chat.messages[chat.messages.length - 1];
-    const messageText = lastMessage.context.length > 50
-      ? lastMessage.context.substring(0, 50) + "..."
-      : lastMessage.context;
+    const messageText =
+      lastMessage.context.length > 50
+        ? lastMessage.context.substring(0, 50) + '...'
+        : lastMessage.context;
     if (lastMessage.senderID === user?.userID) {
-      return (
-      <p>Bạn: {truncateText(messageText)}</p>
-      );
+      return <p>Bạn: {truncateText(messageText)}</p>;
     } else {
       return `${chat.conversation.username}: ${truncateText(messageText)}`;
     }
   };
 
-  const getGroupLastMessageInfo = (group) => {
-    if (!group.messages || group.messages.length === 0) return "Chưa có tin nhắn";
+  const getGroupLastMessageInfo = group => {
+    if (!group.messages || group.messages.length === 0) return 'Chưa có tin nhắn';
     const lastMessage = group.messages[group.messages.length - 1];
     if (lastMessage.senderID === user?.userID) {
       return `Bạn: ${truncateText(lastMessage.context)}`;
     } else {
-      const sender = group.members.find((m) => m.userID === lastMessage.senderID);
-      return `${sender?.username || "Thành viên"}: ${truncateText(lastMessage.context)}`;
+      const sender = group.members.find(m => m.userID === lastMessage.senderID);
+      return `${sender?.username || 'Thành viên'}: ${truncateText(lastMessage.context)}`;
     }
   };
 
   const handleCreateGroup = async () => {
     if (!groupName.trim()) {
-      alert("Tên nhóm không được để trống!");
+      alert('Tên nhóm không được để trống!');
       return;
     }
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
       const createGroupRes = await axios.post(
-        "http://localhost:3000/api/group",
+        'http://localhost:3000/api/group',
         { groupName, userID: user.userID },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const groupID = createGroupRes.data.group.groupID;
 
-      socket.emit("groupCreated", { groupID });
+      socket.emit('groupCreated', { groupID });
       setShowCreateGroupModal(false);
-      setGroupName("");
+      setGroupName('');
       await fetchGroups(token, user.userID);
-      alert("Tạo nhóm thành công!");
+      alert('Tạo nhóm thành công!');
     } catch (err) {
-      console.error("Lỗi khi tạo nhóm:", err);
+      console.error('Lỗi khi tạo nhóm:', err);
       alert(`Lỗi khi tạo nhóm: ${err.message}`);
     }
+  };
+
+  const handleRefreshGroup = async () => {
+    fetchGroups(localStorage.getItem('token'), user.userID);
   };
 
   return (
     <div className="home-container">
       <div className="left-sidebar">
-          <img src={getAvatarUrl(user?.avatar)} 
+        <img
+          src={getAvatarUrl(user?.avatar)}
           onClick={toggleDropdown}
           style={{
-            objectFit:'cover',
-            width:40,
-            height:40,
-            borderRadius: "99999px",
-            cursor: "pointer"
+            objectFit: 'cover',
+            width: 40,
+            height: 40,
+            borderRadius: '99999px',
+            cursor: 'pointer',
           }}
-          alt="User" />
-          {showDropdown && (
-            <div className="user-dropdown">
-              <div className="dropdown-username">{user?.username || "Người dùng"}</div>
-              <hr className="dropdown-divider" />
-              <div className="dropdown-item" onClick={() => navigate("/profile")}>
-                <i className="fas fa-user-circle"></i>
-                Thông tin cá nhân
-              </div>
-              <div className="dropdown-item" onClick={() => setShowChangePasswordModal(true)}>
-                <i className="fas fa-lock"></i>
-                Đổi mật khẩu
-              </div>
-              <div className="dropdown-item" onClick={handleLogout}>
-                <i className="fas fa-sign-out-alt"></i>
-                Đăng xuất
-              </div>
+          alt="User"
+        />
+        {showDropdown && (
+          <div className="user-dropdown">
+            <div className="dropdown-username">{user?.username || 'Người dùng'}</div>
+            <hr className="dropdown-divider" />
+            <div className="dropdown-item" onClick={() => navigate('/profile')}>
+              <i className="fas fa-user-circle"></i>
+              Thông tin cá nhân
             </div>
-          )}
+            <div className="dropdown-item" onClick={() => setShowChangePasswordModal(true)}>
+              <i className="fas fa-lock"></i>
+              Đổi mật khẩu
+            </div>
+            <div className="dropdown-item" onClick={handleLogout}>
+              <i className="fas fa-sign-out-alt"></i>
+              Đăng xuất
+            </div>
+          </div>
+        )}
         <div className="sidebar-icons">
           <div
-            className={`sidebar-icon ${activeTab === "all" ? "active" : ""}`}
-            onClick={() => setActiveTab("all")}
+            className={`sidebar-icon ${activeTab === 'all' ? 'active' : ''}`}
+            onClick={() => setActiveTab('all')}
             title="Tin nhắn"
           >
             <i className="fas fa-comment"></i>
           </div>
           <div
-            className={`sidebar-icon ${activeTab === "groups" ? "active" : ""}`}
-            onClick={() => setActiveTab("groups")}
+            className={`sidebar-icon ${activeTab === 'groups' ? 'active' : ''}`}
+            onClick={() => setActiveTab('groups')}
             title="Nhóm"
           >
             <i className="fas fa-users"></i>
           </div>
           <div
-            className={`sidebar-icon ${activeTab === "contacts" ? "active" : ""}`}
-            onClick={() => setActiveTab("contacts")}
+            className={`sidebar-icon ${activeTab === 'contacts' ? 'active' : ''}`}
+            onClick={() => setActiveTab('contacts')}
             title="Danh bạ"
           >
             <i className="fas fa-address-book"></i>
@@ -746,7 +858,7 @@ export default function Home() {
               type="text"
               placeholder="Nhập số điện thoại để tìm bạn bè..."
               value={searchPhone}
-              onChange={(e) => setSearchPhone(e.target.value)}
+              onChange={e => setSearchPhone(e.target.value)}
             />
             <button type="submit">Tìm</button>
           </form>
@@ -763,15 +875,17 @@ export default function Home() {
         {searchError && <p className="error-message">{searchError}</p>}
 
         <div className="chat-list">
-          {activeTab === "all" && (
+          {activeTab === 'all' && (
             <>
               {chatList.length === 0 ? (
-                <p className="no-chats-message">Chưa có cuộc trò chuyện nào. Hãy thêm liên hệ để bắt đầu!</p>
+                <p className="no-chats-message">
+                  Chưa có cuộc trò chuyện nào. Hãy thêm liên hệ để bắt đầu!
+                </p>
               ) : (
-                chatList.map((chat) => (
+                chatList.map(chat => (
                   <div
                     key={chat.conversation.userID}
-                    className={`chat-item ${selectedChat === chat.conversation.userID ? "active" : ""}`}
+                    className={`chat-item ${selectedChat === chat.conversation.userID ? 'active' : ''}`}
                     onClick={() => handleSelectChat(chat.conversation.userID)}
                   >
                     <img
@@ -779,18 +893,16 @@ export default function Home() {
                       src={chat.conversation.avatar}
                       alt={chat.conversation.username}
                       style={{
-                        minWidth:50,
-                        height:50,
-                        objectFit:'cover'
+                        minWidth: 50,
+                        height: 50,
+                        objectFit: 'cover',
                       }}
                     />
                     <div className="chat-info">
                       <div className="chat-name">{chat.conversation.username}</div>
-                      <div className="chat-last-message">
-                        {getLastMessageInfo(chat)}
-                      </div>
+                      <div className="chat-last-message">{getLastMessageInfo(chat)}</div>
                     </div>
-                    {chat.messages.some((msg) => !msg.seenStatus.includes(user?.userID)) && (
+                    {chat.messages.some(msg => !msg.seenStatus.includes(user?.userID)) && (
                       <span className="unread-indicator">Mới</span>
                     )}
                   </div>
@@ -798,9 +910,12 @@ export default function Home() {
               )}
             </>
           )}
-          {activeTab === "groups" && (
+          {activeTab === 'groups' && (
             <>
-              <div className="create-group-container">
+              <div
+                className="create-group-container"
+                style={{ display: 'flex', alignItems: 'center' }}
+              >
                 <button
                   className="create-group-btn"
                   onClick={() => setShowCreateGroupModal(true)}
@@ -808,14 +923,15 @@ export default function Home() {
                 >
                   <i className="fas fa-plus-circle"></i> Tạo nhóm
                 </button>
+                <RefreshIcon onClick={handleRefreshGroup} />
               </div>
               {groupList.length === 0 ? (
                 <p>Chưa có nhóm nào. Hãy tạo nhóm để bắt đầu!</p>
               ) : (
-                groupList.map((group) => (
+                groupList.map(group => (
                   <div
                     key={group.group.groupID}
-                    className={`chat-item ${selectedGroup === group.group.groupID ? "active" : ""}`}
+                    className={`chat-item ${selectedGroup === group.group.groupID ? 'active' : ''}`}
                     onClick={() => handleSelectGroup(group.group.groupID)}
                   >
                     <div className="group-avatar">
@@ -830,24 +946,22 @@ export default function Home() {
                     </div>
                     <div className="chat-info">
                       <div className="chat-name">{group.group.groupName}</div>
-                      <div className="chat-last-message">
-                        {getGroupLastMessageInfo(group)}
-                      </div>
+                      <div className="chat-last-message">{getGroupLastMessageInfo(group)}</div>
                     </div>
                   </div>
                 ))
               )}
             </>
           )}
-          {activeTab === "contacts" && (
+          {activeTab === 'contacts' && (
             <>
               {contacts.length === 0 ? (
                 <p>Chưa có liên hệ nào. Hãy thêm liên hệ để bắt đầu!</p>
               ) : (
-                contacts.map((contact) => (
+                contacts.map(contact => (
                   <div
                     key={contact.userID}
-                    className={`chat-item ${selectedChat === contact.userID ? "active" : ""}`}
+                    className={`chat-item ${selectedChat === contact.userID ? 'active' : ''}`}
                     onClick={() => handleSelectChat(contact.userID, contact)}
                   >
                     <div className="chat-avatar">
@@ -859,7 +973,7 @@ export default function Home() {
                     <div className="delete-option">
                       <i
                         className="fas fa-ellipsis-h"
-                        onClick={(e) => {
+                        onClick={e => {
                           e.stopPropagation();
                           setSelectedContactToDelete(contact);
                           setShowConfirmDelete(true);
@@ -878,18 +992,25 @@ export default function Home() {
         {selectedChat ? (
           <ChatBox user={user} partnerID={selectedChat} onBack={handleBackToChatList} />
         ) : selectedGroup ? (
-          <GroupChatBox user={user} groupID={selectedGroup} onBack={handleBackToChatList} fetchGroups={fetchGroups} />
+          <GroupChatBox
+            user={user}
+            groupID={selectedGroup}
+            onBack={handleBackToChatList}
+            fetchGroups={fetchGroups}
+          />
         ) : (
           <div className="welcome-content">
             <div className="welcome-text-wrapper">
               <h2 className="welcome-text">Chào mừng đến với ChatApp!</h2>
-              <p className="welcome-subtext">Khám phá những tiện ích hỗ trợ làm việc và trò chuyện.</p>
+              <p className="welcome-subtext">
+                Khám phá những tiện ích hỗ trợ làm việc và trò chuyện.
+              </p>
             </div>
             <div className="thumbnail-carousel">
               {thumbnails.map((thumb, index) => (
                 <div
                   key={thumb.id}
-                  className={`thumbnail-slide ${index === currentSlide ? "active" : ""}`}
+                  className={`thumbnail-slide ${index === currentSlide ? 'active' : ''}`}
                 >
                   <div className="thumbnail-image-wrapper">
                     <img src={thumb.image} alt="ChatApp Features" className="thumbnail-image" />
@@ -902,7 +1023,7 @@ export default function Home() {
                 {thumbnails.map((_, index) => (
                   <span
                     key={index}
-                    className={`dot ${index === currentSlide ? "active" : ""}`}
+                    className={`dot ${index === currentSlide ? 'active' : ''}`}
                     onClick={() => setCurrentSlide(index)}
                   />
                 ))}
@@ -1010,7 +1131,7 @@ export default function Home() {
                 type="text"
                 id="groupName"
                 value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
+                onChange={e => setGroupName(e.target.value)}
                 required
               />
             </div>
