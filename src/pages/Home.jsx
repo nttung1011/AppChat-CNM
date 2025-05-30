@@ -349,7 +349,8 @@ export default function Home() {
               const lastMessageB =
                 b.messages.length > 0 ? new Date(b.messages[b.messages.length - 1].createdAt) : 0;
               return lastMessageB - lastMessageA;
-            });
+            }
+            );
           } else {
             const newChat = {
               conversation: {
@@ -487,7 +488,7 @@ export default function Home() {
       socket.off('memberAdded');
       socket.off('memberKicked');
       socket.off('memberLeft');
-      socket.off('leaderSwitched');
+      socket.on('leaderSwitched');
       socket.off('newMember');
       socket.off('forceLeaveGroup');
       socket.off('memberLeft');
@@ -789,6 +790,13 @@ export default function Home() {
     fetchGroups(localStorage.getItem('token'), user.userID);
   };
 
+  const closeAddContactModal = () => {
+    setShowAddContactModal(false);
+    setSearchError('');
+    setSearchPhone('');
+    setSearchResult(null);
+  };
+
   return (
     <div className="home-container">
       <div className="left-sidebar">
@@ -925,7 +933,7 @@ export default function Home() {
                 chatList.map(chat => (
                   <div
                     key={chat.conversation.userID}
-                    className={`chat-item ${selectedChat === chat.conversation.userID ? 'active' : ''}`}
+                    className="chat-item ${selectedChat === chat.conversation.userID ? 'active' : ''}"
                     onClick={() => handleSelectChat(chat.conversation.userID)}
                   >
                     <div className="chat-avatar">
@@ -1043,7 +1051,7 @@ export default function Home() {
             <div className="welcome-text-wrapper">
               <h2 className="welcome-text">Chào mừng đến với ChatApp!</h2>
               <p className="welcome-subtext">
-                Khám phá những tiện ích hỗ trợ làm việc và trò chuyện.
+                Khám ứng dụng những tiện ích hỗ trợ làm việc và trò chuyện.
               </p>
             </div>
             <div className="thumbnail-carousel">
@@ -1188,11 +1196,11 @@ export default function Home() {
       )}
 
       {showAddContactModal && (
-        <div className="modal-overlay">
-          <div className="modal">
+        <div className="modal-overlay" onClick={closeAddContactModal}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Thêm liên hệ</h2>
-              <button className="modal-close" onClick={() => setShowAddContactModal(false)}>
+              <button className="modal-close" onClick={closeAddContactModal}>
                 <i className="fas fa-times"></i>
               </button>
             </div>
@@ -1216,7 +1224,7 @@ export default function Home() {
                 <button
                   type="button"
                   className="cancel-button"
-                  onClick={() => setShowAddContactModal(false)}
+                  onClick={closeAddContactModal}
                 >
                   Hủy
                 </button>
