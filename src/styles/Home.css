@@ -319,6 +319,9 @@ body {
     flex-direction: column;
     background-color: #e5e5e5 !important;
     position: relative;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .welcome-content {
