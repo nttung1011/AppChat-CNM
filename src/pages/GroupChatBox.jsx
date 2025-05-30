@@ -10,6 +10,7 @@ import { Box, Typography, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import GroupMembers from '../components/GroupMembers';
 import KickMemberModal from '../components/KickMemberModal';
+import Picker from "emoji-picker-react";
 
 export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
   const [group, setGroup] = useState(null);
@@ -31,6 +32,9 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
   const [replyMessage, setReplyMessage] = useState(null);
   const [showGroupMembers, setShowGroupMembers] = useState(false);
   const messageBoxRef = useRef(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const fileInputRef = useRef(null);
+  const [file, setFile] = useState(null);
 
   const fetchGroupInfo = useCallback(async () => {
     try {
@@ -194,39 +198,105 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
     }
   }, [messages]);
 
-  const handleSendMessage = async e => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
+  const handleFileChange = (e) => {
+    setFile(e.target.files[0]);
+  };
 
-    if (replyMessage) {
-      console.log('Replying to message comming soon', replyMessage);
-      //reset
-      setReplyMessage(null);
+  const getMessageTypeFromFile = (file) => {
+    const fileType = file.type.split('/')[0];
+    switch (fileType) {
+      case 'image':
+        return "type2";
+      case 'video':
+        return "type3";
+      case 'audio':
+        return "type5";
+      default:
+        return "type6";
+    }
+  };
+
+  const onEmojiClick = (emojiObject) => {
+    setNewMessage((prev) => prev + emojiObject.emoji);
+    setShowEmojiPicker(false);
+  };
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+
+    if (!newMessage.trim() && !file) {
+      alert("Vui lòng nhập tin nhắn hoặc đính kèm file!");
+      return;
     }
 
-    try {
-      const token = localStorage.getItem('token');
-      const messageTypeID = 'type1'; // Text message
-      const messageID = `msg-${Date.now()}`;
-      const message = {
+    if (!user?.userID || !groupID) {
+      alert("Lỗi: Thiếu thông tin người dùng hoặc nhóm!");
+      return;
+    }
+
+    const messageID = `${user.userID}-${Date.now()}`;
+    let fileData = null;
+
+    if (file) {
+      try {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+          fileData = {
+            name: file.name,
+            data: reader.result.split(",")[1],
+            type: file.type,
+          };
+
+          const messageData = {
+            messageID,
+            senderID: user.userID,
+            groupID,
+            messageTypeID: getMessageTypeFromFile(file),
+            context: newMessage || file.name,
+            file: fileData,
+            senderAvatar: user.avatar || "NONE",
+            senderUsername: user.username,
+            createdAt: new Date().toISOString(),
+          };
+
+          socket.emit("sendMessage", messageData, (response) => {
+            if (response === "Đã nhận") {
+              setNewMessage("");
+              setFile(null);
+              fileInputRef.current.value = null;
+            } else {
+              alert("Lỗi khi gửi tin nhắn: " + response);
+            }
+          });
+        };
+        reader.onerror = () => {
+          alert("Lỗi khi đọc file!");
+        };
+      } catch (err) {
+        alert("Lỗi khi xử lý file: " + err.message);
+      }
+    } else {
+      const messageData = {
         messageID,
         senderID: user.userID,
         groupID,
-        messageTypeID,
+        messageTypeID: "type1",
         context: newMessage,
+        file: null,
+        senderAvatar: user.avatar || "NONE",
+        senderUsername: user.username,
         seenStatus: [user.userID],
         createdAt: new Date().toISOString(),
       };
 
-      socket.emit('sendMessage', message);
-      // await axios.post(
-      //   "http://13.211.212.72:3000/api/message",
-      //   { ...message, receiverID: "NONE" },
-      //   { headers: { Authorization: `Bearer ${token}` } }
-      // );
-      setNewMessage('');
-    } catch (err) {
-      console.error('Lỗi khi gửi tin nhắn:', err);
+      socket.emit("sendMessage", messageData, (response) => {
+        if (response === "Đã nhận") {
+          setNewMessage("");
+        } else {
+          alert("Lỗi khi gửi tin nhắn: " + response);
+        }
+      });
     }
   };
 
@@ -487,7 +557,26 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
                   />
                 </div>
               )}
-              <div className="message-content">{msg.context}</div>
+              <div
+                className="message-content"
+              >
+                {msg.messageTypeID === "type2" ? (
+                  <a href={msg.context} target="_blank" rel="noopener noreferrer">
+                    <img src={msg.context} alt="Hình ảnh" style={{ maxWidth: "200px" }} />
+                  </a>
+                ) : msg.messageTypeID === "type3" ? (
+                  <video controls style={{ maxWidth: "200px" }}>
+                    <source src={msg.context} type="video/mp4" />
+                    Video của bạn
+                  </video>
+                ) : msg.messageTypeID === "type5" || msg.messageTypeID === "type6" ? (
+                  <a href={msg.context} target="_blank" rel="noopener noreferrer">
+                    Tệp: {msg.context.split("/").pop()}
+                  </a>
+                ) : (
+                  msg.context
+                )}
+              </div>
               {msg.senderID !== user.userID && (
                 <div className="message-action-wrapper">
                   <ReplyIcon className="action-icon" onClick={() => handleReplyMessage(msg)} />
@@ -549,6 +638,32 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
       )}
       <div className="group-chat-box-input">
         <form onSubmit={handleSendMessage} className="input-group">
+          <button
+            type="button"
+            onClick={() => setShowEmojiPicker((prev) => !prev)}
+            className="emoji-button"
+          >
+            😊
+          </button>
+          {showEmojiPicker && (
+            <div className="emoji-picker">
+              <Picker onEmojiClick={onEmojiClick} />
+            </div>
+          )}
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            style={{ display: "none" }}
+            id="file-input"
+          />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current.click()}
+            className="file-button"
+          >
+            📎
+          </button>
           <input
             type="text"
             value={newMessage}
@@ -558,6 +673,7 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
           <button type="submit">
             <i className="fas fa-paper-plane"></i>
           </button>
+          {file && <span className="file-name">{file.name}</span>}
         </form>
       </div>
 

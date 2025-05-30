@@ -193,14 +193,14 @@ export default function ChatBox({ user, partnerID, onBack }) {
               setNewMessage("");
               setFile(null);
               fileInputRef.current.value = null;
-              // Phát sự kiện để cập nhật chatList và conversationsID
-              socket.emit("updateChatList", {
-                userID: user.userID,
-                partnerID: partnerID,
-                partnerUsername: partner?.username || "Người dùng",
-                partnerAvatar: partner?.avatar || "NONE",
-                message: messageData,
-              });
+              // // Phát sự kiện để cập nhật chatList và conversationsID
+              // socket.emit("updateChatList", {
+              //   userID: user.userID,
+              //   partnerID: partnerID,
+              //   partnerUsername: partner?.username || "Người dùng",
+              //   partnerAvatar: partner?.avatar || "NONE",
+              //   message: messageData,
+              // });
             } else {
               alert("Lỗi khi gửi tin nhắn: " + response);
             }
@@ -228,14 +228,14 @@ export default function ChatBox({ user, partnerID, onBack }) {
       socket.emit("sendMessage", messageData, (response) => {
         if (response === "Đã nhận") {
           setNewMessage("");
-          // Phát sự kiện để cập nhật chatList và conversationsID
-          socket.emit("updateChatList", {
-            userID: user.userID,
-            partnerID: partnerID,
-            partnerUsername: partner?.username || "Người dùng",
-            partnerAvatar: partner?.avatar || "NONE",
-            message: messageData,
-          });
+          // // Phát sự kiện để cập nhật chatList và conversationsID
+          // socket.emit("updateChatList", {
+          //   userID: user.userID,
+          //   partnerID: partnerID,
+          //   partnerUsername: partner?.username || "Người dùng",
+          //   partnerAvatar: partner?.avatar || "NONE",
+          //   message: messageData,
+          // });
         } else {
           alert("Lỗi khi gửi tin nhắn: " + response);
         }
