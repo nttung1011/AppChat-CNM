@@ -86,18 +86,22 @@ export default function ChatBox({ user, partnerID, onBack }) {
         const token = localStorage.getItem("token");
         if (!token) throw new Error("Token not found");
 
-        const partnerRes = await axios.get(`http://localhost:3000/api/user/${partnerID}`, {
+        const partnerRes = await axios.get(`http://13.211.212.72:3000/api/user/${partnerID}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setPartner(partnerRes.data);
 
         const messagesRes = await axios.get(
-          `http://localhost:3000/api/message/single/${user.userID}/${partnerID}`,
+          `http://13.211.212.72:3000/api/message/single/${user.userID}/${partnerID}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        setMessages(messagesRes.data);
+        const messagesData=messagesRes.data||[]        
+        const filteredMessages = messagesData.filter(
+          msg => !msg.deleteStatusByUser?.includes(user.userID)
+        );
+        setMessages(filteredMessages);
 
-        const contactsRes = await axios.get(`http://localhost:3000/api/user/${user.userID}/contacts`, {
+        const contactsRes = await axios.get(`http://13.211.212.72:3000/api/user/${user.userID}/contacts`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const updatedContacts = contactsRes.data.map(contact => ({

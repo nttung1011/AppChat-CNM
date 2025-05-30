@@ -24,7 +24,7 @@ const GroupMembersModal = ({ open, onClose, groupID }) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get(`http://localhost:3000/api/group/${groupID}/users`);
+      const response = await axios.get(`http://13.211.212.72:3000/api/group/${groupID}/users`);
       setMembers(response.data.data);
     } catch (err) {
       setError('Failed to fetch group members');

@@ -35,17 +35,17 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
   const fetchGroupInfo = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const groupRes = await axios.get(`http://localhost:3000/api/group/${groupID}/info`, {
+      const groupRes = await axios.get(`http://13.211.212.72:3000/api/group/${groupID}/info`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setGroup(groupRes.data.data);
 
-      const membersRes = await axios.get(`http://localhost:3000/api/group/${groupID}/users`, {
+      const membersRes = await axios.get(`http://13.211.212.72:3000/api/group/${groupID}/users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMembers(membersRes.data.data);
 
-      const messagesRes = await axios.get(`http://localhost:3000/api/message/group/${groupID}`, {
+      const messagesRes = await axios.get(`http://13.211.212.72:3000/api/message/group/${groupID}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMessages(messagesRes.data);
@@ -68,14 +68,14 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
     try {
       const token = localStorage.getItem('token');
       const contactsRes = await axios.get(
-        `http://localhost:3000/api/user/${user.userID}/contacts`,
+        `http://13.211.212.72:3000/api/user/${user.userID}/contacts`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
       const contactsData = await Promise.all(
         contactsRes.data.map(async contact => {
-          const contactRes = await axios.get(`http://localhost:3000/api/user/${contact.userID}`, {
+          const contactRes = await axios.get(`http://13.211.212.72:3000/api/user/${contact.userID}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           return contactRes.data;
@@ -220,7 +220,7 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
 
       socket.emit('sendMessage', message);
       // await axios.post(
-      //   "http://localhost:3000/api/message",
+      //   "http://13.211.212.72:3000/api/message",
       //   { ...message, receiverID: "NONE" },
       //   { headers: { Authorization: `Bearer ${token}` } }
       // );
@@ -235,7 +235,7 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
       const token = localStorage.getItem('token');
       for (const contactID of selectedContacts) {
         // const joinRes = await axios.put(
-        //   "http://localhost:3000/api/group/join",
+        //   "http://13.211.212.72:3000/api/group/join",
         //   { userID: contactID, groupID },
         //   { headers: { Authorization: `Bearer ${token}` } }
         // );
@@ -260,7 +260,7 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
     try {
       const token = localStorage.getItem('token');
       // await axios.put(
-      //   `http://localhost:3000/api/group/kick`,
+      //   `http://13.211.212.72:3000/api/group/kick`,
       //   { userID: selectedMemberToKick.userID, groupID },
       //   { headers: { Authorization: `Bearer ${token}` } }
       // );
@@ -286,7 +286,7 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
     try {
       const token = localStorage.getItem('token');
       // await axios.put(
-      //   `http://localhost:3000/api/group/rename`,
+      //   `http://13.211.212.72:3000/api/group/rename`,
       //   { groupID, newGroupName },
       //   { headers: { Authorization: `Bearer ${token}` } }
       // );
@@ -306,7 +306,7 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
     try {
       const token = localStorage.getItem('token');
       // await axios.put(
-      //   `http://localhost:3000/api/group/leave`,
+      //   `http://13.211.212.72:3000/api/group/leave`,
       //   { userID: user.userID, groupID },
       //   { headers: { Authorization: `Bearer ${token}` } }
       // );
@@ -333,7 +333,7 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
 
     try {
       const token = localStorage.getItem('token');
-      // const response = await axios.delete(`http://localhost:3000/api/group/${groupID}`, {
+      // const response = await axios.delete(`http://13.211.212.72:3000/api/group/${groupID}`, {
       //   headers: { Authorization: `Bearer ${token}` },
       // });
       socket.emit('deleteGroup', user.userID, groupID, res => {
@@ -350,7 +350,7 @@ export default function GroupChatBox({ user, groupID, onBack, fetchGroups }) {
     try {
       const token = localStorage.getItem('token');
       // await axios.put(
-      //   `http://localhost:3000/api/group/switchRole`,
+      //   `http://13.211.212.72:3000/api/group/switchRole`,
       //   { userID: user.userID, targetUserID: selectedMemberToLead.userID, groupID },
       //   { headers: { Authorization: `Bearer ${token}` } }
       // );

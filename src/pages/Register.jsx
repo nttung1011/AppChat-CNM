@@ -57,7 +57,7 @@ export default function Register() {
       // Kiểm tra số điện thoại đã tồn tại hay chưa
       try {
         // Gọi API để lấy danh sách users
-        const response = await axios.get("http://localhost:3000/api/user/");
+        const response = await axios.get("http://13.211.212.72:3000/api/user/");
         const users = response.data;
         
         // Kiểm tra xem số điện thoại đã tồn tại trong danh sách chưa
@@ -76,7 +76,7 @@ export default function Register() {
       }
 
       // Gửi yêu cầu OTP nếu số điện thoại chưa tồn tại
-      const otpResponse = await axios.post("http://localhost:3000/api/OTP/send", {
+      const otpResponse = await axios.post("http://13.211.212.72:3000/api/OTP/send", {
         gmail,
       });
       console.log("Phản hồi OTP:", otpResponse.data);
@@ -99,7 +99,7 @@ export default function Register() {
 
     try {
       // Xác thực OTP
-      const verifyResponse = await axios.post("http://localhost:3000/api/OTP/verify", {
+      const verifyResponse = await axios.post("http://13.211.212.72:3000/api/OTP/verify", {
         gmail,
         OTP: otp,
       });
@@ -109,7 +109,7 @@ export default function Register() {
       if (verifyResponse.data.message === "OTP đúng") {
         // Kiểm tra lại số điện thoại một lần nữa trước khi đăng ký
         try {
-          const response = await axios.get("http://localhost:3000/api/user/");
+          const response = await axios.get("http://13.211.212.72:3000/api/user/");
           const users = response.data;
           const phoneExists = users.some(user => user.phoneNumber === phoneNumber);
           
@@ -123,7 +123,7 @@ export default function Register() {
           console.error("Lỗi khi kiểm tra số điện thoại:", checkError);
         }
 
-        const registerResponse = await axios.post("http://localhost:3000/api/user/", {
+        const registerResponse = await axios.post("http://13.211.212.72:3000/api/user/", {
           username,
           phoneNumber,
           password,
@@ -133,7 +133,7 @@ export default function Register() {
         console.log("Phản hồi từ đăng ký:", registerResponse.data);
 
         // Đăng nhập tự động sau khi đăng ký thành công
-        const loginResponse = await axios.post("http://localhost:3000/api/auth/login", {
+        const loginResponse = await axios.post("http://13.211.212.72:3000/api/auth/login", {
           phoneNumber,
           password,
         });

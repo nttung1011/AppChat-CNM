@@ -25,7 +25,7 @@ const ShareMessageDialog = ({ open, userID, onClose, message, onShare }) => {
   const fetchGroups = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:3000/api/group/${userID}`);
+      const response = await axios.get(`http://13.211.212.72:3000/api/group/${userID}`);
       setGroups(response.data);
     } catch (error) {
       console.error('Error fetching groups:', error);
@@ -38,7 +38,7 @@ const ShareMessageDialog = ({ open, userID, onClose, message, onShare }) => {
   const fetchContacts = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`http://localhost:3000/api/user/${userID}/contacts`);
+      const response = await axios.get(`http://13.211.212.72:3000/api/user/${userID}/contacts`);
       setContacts(response.data);
     } catch (error) {
       console.error('Error fetching contacts:', error);

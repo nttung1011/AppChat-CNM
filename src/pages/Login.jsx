@@ -47,7 +47,7 @@ export default function Login() {
     try {
       const refreshToken = localStorage.getItem("refreshToken");
       if (!refreshToken) throw new Error("No refresh token available");
-      const res = await axios.post("http://localhost:3000/api/auth/refreshToken", {
+      const res = await axios.post("http://13.211.212.72:3000/api/auth/refreshToken", {
         refreshToken,
       });
       localStorage.setItem("token", res.data.accessToken);
@@ -62,7 +62,7 @@ export default function Login() {
   const joinUserGroupRooms = async (userID, token) => {
     try {
       // Gọi API để lấy danh sách nhóm của người dùng
-      const groupsRes = await axios.get(`http://localhost:3000/api/group/${userID}`, {
+      const groupsRes = await axios.get(`http://13.211.212.72:3000/api/group/${userID}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const groupList = groupsRes.data;
@@ -84,7 +84,7 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:3000/api/auth/login", {
+      const res = await axios.post("http://13.211.212.72:3000/api/auth/login", {
         phoneNumber,
         password,
       });
@@ -100,7 +100,7 @@ export default function Login() {
         try {
           const newAccessToken = await refreshToken();
           if (newAccessToken) {
-            const res = await axios.post("http://localhost:3000/api/auth/login", {
+            const res = await axios.post("http://13.211.212.72:3000/api/auth/login", {
               phoneNumber,
               password,
             });

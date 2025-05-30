@@ -45,7 +45,7 @@ export default function Profile() {
       const refreshToken = localStorage.getItem("refreshToken");
       if (!refreshToken) throw new Error("Không có refresh token");
 
-      const res = await axios.post("http://localhost:3000/api/auth/refreshToken", {
+      const res = await axios.post("http://13.211.212.72:3000/api/auth/refreshToken", {
         refreshToken,
       });
       const newAccessToken = res.data.accessToken;
@@ -72,7 +72,7 @@ export default function Profile() {
         const decodedToken = jwtDecode(token);
         const userID = decodedToken.userID;
 
-        const res = await axios.get(`http://localhost:3000/api/user/${userID}`, {
+        const res = await axios.get(`http://13.211.212.72:3000/api/user/${userID}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -92,7 +92,7 @@ export default function Profile() {
             try {
               const decodedToken = jwtDecode(token);
               const userID = decodedToken.userID;
-              const res = await axios.get(`http://localhost:3000/api/user/${userID}`, {
+              const res = await axios.get(`http://13.211.212.72:3000/api/user/${userID}`, {
                 headers: {
                   Authorization: `Bearer ${token}`,
                 },
@@ -144,7 +144,7 @@ export default function Profile() {
       };
 
       const res = await axios.put(
-        `http://localhost:3000/api/user/${userID}`,
+        `http://13.211.212.72:3000/api/user/${userID}`,
         dataToSend,
         {
           headers: {
@@ -207,7 +207,7 @@ export default function Profile() {
         formData.append("avatar", file);
 
         const res = await axios.put(
-          `http://localhost:3000/api/user/${userID}/avatar`,
+          `http://13.211.212.72:3000/api/user/${userID}/avatar`,
           formData,
           {
             headers: {

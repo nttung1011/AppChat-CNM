@@ -2,7 +2,7 @@
 import { io } from "socket.io-client";
 
 // Khởi tạo socket, KHÔNG truyền token ngay lập tức
-const socket = io("http://localhost:3000", {
+const socket = io("http://13.211.212.72:3000", {
     autoConnect: false,
 });
 

@@ -30,7 +30,7 @@ export default function ForgotPassword() {
 
     try {
       // Bước 1: Lấy Gmail liên kết với số điện thoại
-      const gmailRes = await axios.get(`http://localhost:3000/api/user/${phoneNumber}/gmail`);
+      const gmailRes = await axios.get(`http://13.211.212.72:3000/api/user/${phoneNumber}/gmail`);
       setGmail(gmailRes.data.gmail);
       
       // Che giấu một phần email để bảo mật
@@ -43,7 +43,7 @@ export default function ForgotPassword() {
       setMessage(`Gmail liên kết: ${maskedEmail}`);
       
       // Bước 2: Gửi mã OTP đến Gmail đó
-      await axios.post("http://localhost:3000/api/OTP/send", {
+      await axios.post("http://13.211.212.72:3000/api/OTP/send", {
         gmail: gmailRes.data.gmail
       });
       
@@ -70,13 +70,13 @@ export default function ForgotPassword() {
 
     try {
       // Bước 3: Xác thực mã OTP
-      await axios.post("http://localhost:3000/api/OTP/verify", {
+      await axios.post("http://13.211.212.72:3000/api/OTP/verify", {
         gmail,
         OTP: otp
       });
       
       // Bước 4: Đặt lại mật khẩu nếu OTP chính xác
-      await axios.post(`http://localhost:3000/api/user/resetPassword/${phoneNumber}`);
+      await axios.post(`http://13.211.212.72:3000/api/user/resetPassword/${phoneNumber}`);
       setMessage("Đặt lại mật khẩu thành công! Mật khẩu mới đã được gửi đến email của bạn.");
       setStep(3);
     } catch (err) {
@@ -97,7 +97,7 @@ export default function ForgotPassword() {
     setIsLoading(true);
 
     try {
-      await axios.post("http://localhost:3000/api/OTP/send", {
+      await axios.post("http://13.211.212.72:3000/api/OTP/send", {
         gmail
       });
       setMessage("Đã gửi lại mã OTP, vui lòng kiểm tra email của bạn.");

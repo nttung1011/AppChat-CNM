@@ -73,7 +73,7 @@ export default function Home() {
     try {
       const refreshToken = localStorage.getItem('refreshToken');
       if (!refreshToken) throw new Error('Không có refresh token');
-      const res = await axios.post('http://localhost:3000/api/auth/refreshToken', {
+      const res = await axios.post('http://13.211.212.72:3000/api/auth/refreshToken', {
         refreshToken,
       });
       const newAccessToken = res.data.accessToken;
@@ -95,7 +95,7 @@ export default function Home() {
 
   const fetchChats = useCallback(async (token, userID) => {
     try {
-      const chatsRes = await axios.get(`http://localhost:3000/api/message/${userID}`, {
+      const chatsRes = await axios.get(`http://13.211.212.72:3000/api/message/${userID}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (Array.isArray(chatsRes.data)) {
@@ -109,7 +109,7 @@ export default function Home() {
         const sortedChatsWithAvatar = await Promise.all(
           sortedChats.map(async chat => {
             try {
-              const res = await fetch(`http://localhost:3000/api/user/${chat.conversation.userID}`);
+              const res = await fetch(`http://13.211.212.72:3000/api/user/${chat.conversation.userID}`);
               const data = await res.json();
               return {
                 ...chat,
@@ -136,25 +136,25 @@ export default function Home() {
 
   const fetchGroups = useCallback(async (token, userID) => {
     try {
-      const groupsRes = await axios.get(`http://localhost:3000/api/group/${userID}`, {
+      const groupsRes = await axios.get(`http://13.211.212.72:3000/api/group/${userID}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const groupDetails = await Promise.all(
         groupsRes.data.map(async member => {
           const groupRes = await axios.get(
-            `http://localhost:3000/api/group/${member.groupID}/info`,
+            `http://13.211.212.72:3000/api/group/${member.groupID}/info`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }
           );
           const membersRes = await axios.get(
-            `http://localhost:3000/api/group/${member.groupID}/users`,
+            `http://13.211.212.72:3000/api/group/${member.groupID}/users`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }
           );
           const messagesRes = await axios.get(
-            `http://localhost:3000/api/message/group/${member.groupID}`,
+            `http://13.211.212.72:3000/api/message/group/${member.groupID}`,
             {
               headers: { Authorization: `Bearer ${token}` },
             }
@@ -190,7 +190,7 @@ export default function Home() {
       try {
         const decodedToken = jwtDecode(token);
         const userID = decodedToken.userID;
-        const userRes = await axios.get(`http://localhost:3000/api/user/${userID}`, {
+        const userRes = await axios.get(`http://13.211.212.72:3000/api/user/${userID}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUser(userRes.data);
@@ -198,12 +198,12 @@ export default function Home() {
         await fetchChats(token, userID);
         await fetchGroups(token, userID);
 
-        const contactsRes = await axios.get(`http://localhost:3000/api/user/${userID}/contacts`, {
+        const contactsRes = await axios.get(`http://13.211.212.72:3000/api/user/${userID}/contacts`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const contactsData = await Promise.all(
           contactsRes.data.map(async contact => {
-            const contactRes = await axios.get(`http://localhost:3000/api/user/${contact.userID}`, {
+            const contactRes = await axios.get(`http://13.211.212.72:3000/api/user/${contact.userID}`, {
               headers: { Authorization: `Bearer ${token}` },
             });
             return contactRes.data;
@@ -218,7 +218,7 @@ export default function Home() {
             try {
               const decodedToken = jwtDecode(token);
               const userID = decodedToken.userID;
-              const userRes = await axios.get(`http://localhost:3000/api/user/${userID}`, {
+              const userRes = await axios.get(`http://13.211.212.72:3000/api/user/${userID}`, {
                 headers: {
                   Authorization: `Bearer ${token}`,
                 },
@@ -227,7 +227,7 @@ export default function Home() {
               await fetchChats(token, userID);
               await fetchGroups(token, userID);
               const contactsRes = await axios.get(
-                `http://localhost:3000/api/user/${userID}/contacts`,
+                `http://13.211.212.72:3000/api/user/${userID}/contacts`,
                 {
                   headers: {
                     Authorization: `Bearer ${token}`,
@@ -237,7 +237,7 @@ export default function Home() {
               const contactsData = await Promise.all(
                 contactsRes.data.map(async contact => {
                   const contactRes = await axios.get(
-                    `http://localhost:3000/api/user/${contact.userID}`,
+                    `http://13.211.212.72:3000/api/user/${contact.userID}`,
                     {
                       headers: {
                         Authorization: `Bearer ${token}`,
@@ -270,7 +270,7 @@ export default function Home() {
         connectSocketWithToken();
         socket.emit('joinUserRoom', user.userID);
         try {
-          const groupsRes = await axios.get(`http://localhost:3000/api/group/${user.userID}`, {
+          const groupsRes = await axios.get(`http://13.211.212.72:3000/api/group/${user.userID}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           for (const group of groupsRes.data) {
@@ -284,7 +284,7 @@ export default function Home() {
             if (token) {
               try {
                 const groupsRes = await axios.get(
-                  `http://localhost:3000/api/group/${user.userID}`,
+                  `http://13.211.212.72:3000/api/group/${user.userID}`,
                   {
                     headers: {
                       Authorization: `Bearer ${token}`,
@@ -335,7 +335,7 @@ export default function Home() {
       const token = localStorage.getItem('token');
       try {
         const partnerID = message.senderID === user.userID ? message.receiverID : message.senderID;
-        const partnerRes = await axios.get(`http://localhost:3000/api/user/${partnerID}`, {
+        const partnerRes = await axios.get(`http://13.211.212.72:3000/api/user/${partnerID}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const partner = partnerRes.data;
@@ -514,10 +514,10 @@ export default function Home() {
     }
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get(`http://localhost:3000/api/user/${searchPhone}/gmail`, {
+      const res = await axios.get(`http://13.211.212.72:3000/api/user/${searchPhone}/gmail`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const userRes = await axios.get(`http://localhost:3000/api/user`, {
+      const userRes = await axios.get(`http://13.211.212.72:3000/api/user`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const foundUser = userRes.data.find(u => u.gmail === res.data.gmail);
@@ -529,7 +529,7 @@ export default function Home() {
         setSearchError('Không thể thêm chính bạn!');
         return;
       }
-      const latestUser = await axios.get(`http://localhost:3000/api/user/${foundUser.userID}`, {
+      const latestUser = await axios.get(`http://13.211.212.72:3000/api/user/${foundUser.userID}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setSearchResult(latestUser.data);
@@ -543,20 +543,20 @@ export default function Home() {
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        `http://localhost:3000/api/user/${user.userID}/contacts/add`,
+        `http://13.211.212.72:3000/api/user/${user.userID}/contacts/add`,
         { contactID: searchResult.userID },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       const contactsRes = await axios.get(
-        `http://localhost:3000/api/user/${user.userID}/contacts`,
+        `http://13.211.212.72:3000/api/user/${user.userID}/contacts`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
       const contactsData = await Promise.all(
         contactsRes.data.map(async contact => {
-          const contactRes = await axios.get(`http://localhost:3000/api/user/${contact.userID}`, {
+          const contactRes = await axios.get(`http://13.211.212.72:3000/api/user/${contact.userID}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           return contactRes.data;
@@ -576,7 +576,7 @@ export default function Home() {
   const handleLogout = () => {
     const refreshToken = localStorage.getItem('refreshToken');
     if (refreshToken) {
-      axios.post('http://localhost:3000/api/auth/logout', {
+      axios.post('http://13.211.212.72:3000/api/auth/logout', {
         refreshToken,
       });
     }
@@ -622,7 +622,7 @@ export default function Home() {
         }
       }
       await axios.put(
-        `http://localhost:3000/api/user/changePassword/${user.phoneNumber}`,
+        `http://13.211.212.72:3000/api/user/changePassword/${user.phoneNumber}`,
         { oldPassword, newPassword },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -703,19 +703,19 @@ export default function Home() {
     try {
       const token = localStorage.getItem('token');
       await axios.put(
-        `http://localhost:3000/api/user/${user.userID}/contacts/delete`,
+        `http://13.211.212.72:3000/api/user/${user.userID}/contacts/delete`,
         { contactID },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const contactsRes = await axios.get(
-        `http://localhost:3000/api/user/${user.userID}/contacts`,
+        `http://13.211.212.72:3000/api/user/${user.userID}/contacts`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
       const contactsData = await Promise.all(
         contactsRes.data.map(async contact => {
-          const contactRes = await axios.get(`http://localhost:3000/api/user/${contact.userID}`, {
+          const contactRes = await axios.get(`http://13.211.212.72:3000/api/user/${contact.userID}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           return contactRes.data;
@@ -763,7 +763,7 @@ export default function Home() {
     try {
       const token = localStorage.getItem('token');
       const createGroupRes = await axios.post(
-        'http://localhost:3000/api/group',
+        'http://13.211.212.72:3000/api/group',
         { groupName, userID: user.userID },
         { headers: { Authorization: `Bearer ${token}` } }
       );
