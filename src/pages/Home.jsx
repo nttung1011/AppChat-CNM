@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, use } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
@@ -19,6 +19,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState('all');
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
   const [showCreateGroupModal, setShowCreateGroupModal] = useState(false);
+  const [showAddContactModal, setShowAddContactModal] = useState(false);
   const [passwordData, setPasswordData] = useState({
     oldPassword: '',
     newPassword: '',
@@ -27,7 +28,9 @@ export default function Home() {
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [searchPhone, setSearchPhone] = useState('');
+  const [searchName, setSearchName] = useState('');
   const [searchResult, setSearchResult] = useState(null);
+  const [filteredContacts, setFilteredContacts] = useState([]);
   const [searchError, setSearchError] = useState('');
   const [selectedContactToDelete, setSelectedContactToDelete] = useState(null);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
@@ -52,18 +55,12 @@ export default function Home() {
     {
       id: 3,
       image:
-        'https://i0.wp.com/help.zalo.me/wp-content/uploads/2023/12/LanguageVIE.png?fit=4200%2C2730&ssl=1 ',
+        'https://i0.wp.com/help.zalo.me/wp-content/uploads/2023/12/LanguageVIE.png?fit=4200%2C2730&ssl=1',
       title: 'Tính năng nổi bật',
       description: 'Trải nghiệm giao tiếp liền mạch.',
     },
   ];
 
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     setCurrentSlide((prev) => (prev + 1) % thumbnails.length);
-  //   }, 5000);
-  //   return () => clearInterval(interval);
-  // }, [thumbnails.length]);
   const truncateText = (text, maxLength = 30) => {
     if (!text) return '';
     return text.length > maxLength ? text.slice(0, maxLength) + '...' : text;
@@ -210,6 +207,7 @@ export default function Home() {
           })
         );
         setContacts(contactsData);
+        setFilteredContacts(contactsData);
       } catch (err) {
         console.error('Lỗi khi lấy dữ liệu:', err.response?.data || err.message);
         if (err.response?.status === 401) {
@@ -219,9 +217,7 @@ export default function Home() {
               const decodedToken = jwtDecode(token);
               const userID = decodedToken.userID;
               const userRes = await axios.get(`http://13.211.212.72:3000/api/user/${userID}`, {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
+                headers: { Authorization: `Bearer ${token}` },
               });
               setUser(userRes.data);
               await fetchChats(token, userID);
@@ -229,9 +225,7 @@ export default function Home() {
               const contactsRes = await axios.get(
                 `http://13.211.212.72:3000/api/user/${userID}/contacts`,
                 {
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                  },
+                  headers: { Authorization: `Bearer ${token}` },
                 }
               );
               const contactsData = await Promise.all(
@@ -239,15 +233,14 @@ export default function Home() {
                   const contactRes = await axios.get(
                     `http://13.211.212.72:3000/api/user/${contact.userID}`,
                     {
-                      headers: {
-                        Authorization: `Bearer ${token}`,
-                      },
+                      headers: { Authorization: `Bearer ${token}` },
                     }
                   );
                   return contactRes.data;
                 })
               );
               setContacts(contactsData);
+              setFilteredContacts(contactsData);
             } catch (retryErr) {
               console.error('Lỗi khi thử lại:', retryErr);
               navigate('/');
@@ -286,9 +279,7 @@ export default function Home() {
                 const groupsRes = await axios.get(
                   `http://13.211.212.72:3000/api/group/${user.userID}`,
                   {
-                    headers: {
-                      Authorization: `Bearer ${token}`,
-                    },
+                    headers: { Authorization: `Bearer ${token}` },
                   }
                 );
                 for (const group of groupsRes.data) {
@@ -504,7 +495,19 @@ export default function Home() {
     };
   }, [user, fetchGroups]);
 
-  const handleSearchUser = async e => {
+  const handleSearchByName = (e) => {
+    e.preventDefault();
+    if (!searchName.trim()) {
+      setFilteredContacts(contacts);
+      return;
+    }
+    const filtered = contacts.filter(contact =>
+      contact.username.toLowerCase().includes(searchName.toLowerCase())
+    );
+    setFilteredContacts(filtered);
+  };
+
+  const handleSearchUser = async (e) => {
     e.preventDefault();
     setSearchError('');
     setSearchResult(null);
@@ -563,9 +566,10 @@ export default function Home() {
         })
       );
       setContacts(contactsData);
-
+      setFilteredContacts(contactsData);
       setSearchResult(null);
       setSearchPhone('');
+      setShowAddContactModal(false);
       alert('Thêm liên hệ thành công!');
     } catch (err) {
       console.error('Lỗi khi thêm liên hệ:', err.response.data?.message || err.message);
@@ -722,6 +726,7 @@ export default function Home() {
         })
       );
       setContacts(contactsData);
+      setFilteredContacts(contactsData);
       setShowConfirmDelete(false);
       setSelectedContactToDelete(null);
       alert('Xóa liên hệ thành công!');
@@ -787,18 +792,15 @@ export default function Home() {
   return (
     <div className="home-container">
       <div className="left-sidebar">
-        <img
-          src={getAvatarUrl(user?.avatar)}
-          onClick={toggleDropdown}
-          style={{
-            objectFit: 'cover',
-            width: 40,
-            height: 40,
-            borderRadius: '99999px',
-            cursor: 'pointer',
-          }}
-          alt="User"
-        />
+        <div className="user-avatar-wrapper">
+          <img
+            src={getAvatarUrl(user?.avatar)}
+            onClick={toggleDropdown}
+            className="user-avatar"
+            alt="User"
+          />
+          <div className="username">{user?.username || 'Người dùng'}</div>
+        </div>
         {showDropdown && (
           <div className="user-dropdown">
             <div className="dropdown-username">{user?.username || 'Người dùng'}</div>
@@ -821,52 +823,61 @@ export default function Home() {
           <div
             className={`sidebar-icon ${activeTab === 'all' ? 'active' : ''}`}
             onClick={() => setActiveTab('all')}
-            title="Tin nhắn"
           >
             <i className="fas fa-comment"></i>
+            <span>Hộp thư</span>
           </div>
           <div
             className={`sidebar-icon ${activeTab === 'groups' ? 'active' : ''}`}
             onClick={() => setActiveTab('groups')}
-            title="Nhóm"
           >
             <i className="fas fa-users"></i>
+            <span>Nhóm</span>
           </div>
           <div
             className={`sidebar-icon ${activeTab === 'contacts' ? 'active' : ''}`}
             onClick={() => setActiveTab('contacts')}
-            title="Danh bạ"
           >
             <i className="fas fa-address-book"></i>
+            <span>Danh bạ</span>
           </div>
           <div className="sidebar-icon">
             <i className="fas fa-book"></i>
+            <span>Nhật ký</span>
           </div>
           <div className="sidebar-icon">
             <i className="fas fa-cloud"></i>
+            <span>Cloud</span>
           </div>
           <div className="sidebar-icon">
             <i className="fas fa-cog"></i>
+            <span>Cài đặt</span>
           </div>
         </div>
       </div>
 
       <div className="chat-list-container">
         <div className="chat-list-header">
-          <form onSubmit={handleSearchUser} className="search-bar">
+          <form onSubmit={handleSearchByName} className="search-bar">
             <input
               type="text"
-              placeholder="Nhập số điện thoại để tìm bạn bè..."
-              value={searchPhone}
-              onChange={e => setSearchPhone(e.target.value)}
+              placeholder="Nhập tên để tìm liên hệ..."
+              value={searchName}
+              onChange={e => setSearchName(e.target.value)}
             />
-            <button type="submit">Tìm</button>
+            <i
+              className="fas fa-user-plus add-contact-icon"
+              onClick={() => setShowAddContactModal(true)}
+            ></i>
           </form>
         </div>
 
         {searchResult && (
           <div className="search-result">
             <div className="search-result-item">
+              <div className="chat-avatar">
+                <img src={getAvatarUrl(searchResult.avatar)} alt={searchResult.username} />
+              </div>
               <span>{searchResult.username}</span>
               <button onClick={handleAddContact}>Thêm liên hệ</button>
             </div>
@@ -877,10 +888,39 @@ export default function Home() {
         <div className="chat-list">
           {activeTab === 'all' && (
             <>
-              {chatList.length === 0 ? (
-                <p className="no-chats-message">
+              {searchName.trim() && filteredContacts.length > 0 ? (
+                filteredContacts.map(contact => (
+                  <div
+                    key={contact.userID}
+                    className={`chat-item ${selectedChat === contact.userID ? 'active' : ''}`}
+                    onClick={() => handleSelectChat(contact.userID, contact)}
+                  >
+                    <div className="chat-avatar">
+                      <img src={getAvatarUrl(contact.avatar)} alt={contact.username} />
+                    </div>
+                    <div className="chat-info">
+                      <div className="chat-name">{contact.username}</div>
+                    </div>
+                    <div className="delete-option">
+                      <i
+                        className="fas fa-ellipsis-h"
+                        onClick={e => {
+                          e.stopPropagation();
+                          setSelectedContactToDelete(contact);
+                          setShowConfirmDelete(true);
+                        }}
+                      ></i>
+                    </div>
+                  </div>
+                ))
+              ) : searchName.trim() && filteredContacts.length === 0 ? (
+                <div className="no-data-message">
+                  Không tìm thấy liên hệ khớp với tên!
+                </div>
+              ) : chatList.length === 0 ? (
+                <div className="no-data-message">
                   Chưa có cuộc trò chuyện nào. Hãy thêm liên hệ để bắt đầu!
-                </p>
+                </div>
               ) : (
                 chatList.map(chat => (
                   <div
@@ -888,16 +928,12 @@ export default function Home() {
                     className={`chat-item ${selectedChat === chat.conversation.userID ? 'active' : ''}`}
                     onClick={() => handleSelectChat(chat.conversation.userID)}
                   >
-                    <img
-                      className="chat-avatar"
-                      src={chat.conversation.avatar}
-                      alt={chat.conversation.username}
-                      style={{
-                        minWidth: 50,
-                        height: 50,
-                        objectFit: 'cover',
-                      }}
-                    />
+                    <div className="chat-avatar">
+                      <img
+                        src={chat.conversation.avatar}
+                        alt={chat.conversation.username}
+                      />
+                    </div>
                     <div className="chat-info">
                       <div className="chat-name">{chat.conversation.username}</div>
                       <div className="chat-last-message">{getLastMessageInfo(chat)}</div>
@@ -926,7 +962,9 @@ export default function Home() {
                 <RefreshIcon onClick={handleRefreshGroup} />
               </div>
               {groupList.length === 0 ? (
-                <p>Chưa có nhóm nào. Hãy tạo nhóm để bắt đầu!</p>
+                <div className="no-data-message">
+                  Chưa có nhóm nào. Hãy tạo nhóm để bắt đầu!
+                </div>
               ) : (
                 groupList.map(group => (
                   <div
@@ -955,10 +993,12 @@ export default function Home() {
           )}
           {activeTab === 'contacts' && (
             <>
-              {contacts.length === 0 ? (
-                <p>Chưa có liên hệ nào. Hãy thêm liên hệ để bắt đầu!</p>
+              {filteredContacts.length === 0 ? (
+                <div className="no-data-message">
+                  Chưa có liên hệ nào hoặc không tìm thấy liên hệ khớp với tên!
+                </div>
               ) : (
-                contacts.map(contact => (
+                filteredContacts.map(contact => (
                   <div
                     key={contact.userID}
                     className={`chat-item ${selectedChat === contact.userID ? 'active' : ''}`}
@@ -1143,6 +1183,56 @@ export default function Home() {
                 Hủy
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showAddContactModal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <div className="modal-header">
+              <h2>Thêm liên hệ</h2>
+              <button className="modal-close" onClick={() => setShowAddContactModal(false)}>
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+            <form className="modal-form" onSubmit={handleSearchUser}>
+              <div className="form-group">
+                <label htmlFor="searchPhone">Số điện thoại</label>
+                <input
+                  type="text"
+                  id="searchPhone"
+                  value={searchPhone}
+                  onChange={e => setSearchPhone(e.target.value)}
+                  placeholder="Nhập số điện thoại..."
+                  required
+                />
+              </div>
+              {searchError && <p className="error-message">{searchError}</p>}
+              <div className="modal-buttons">
+                <button type="submit" className="save-button">
+                  Tìm
+                </button>
+                <button
+                  type="button"
+                  className="cancel-button"
+                  onClick={() => setShowAddContactModal(false)}
+                >
+                  Hủy
+                </button>
+              </div>
+            </form>
+            {searchResult && (
+              <div className="search-result">
+                <div className="search-result-item">
+                  <div className="chat-avatar">
+                    <img src={getAvatarUrl(searchResult.avatar)} alt={searchResult.username} />
+                  </div>
+                  <span>{searchResult.username}</span>
+                  <button onClick={handleAddContact}>Thêm liên hệ</button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
